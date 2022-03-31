@@ -21,29 +21,20 @@ object Dependencies {
     lazy val httpTestkit   = namespace %% "akka-http-testkit"   % akkaHttpVersion
     lazy val streamTestkit = namespace %% "akka-stream-testkit" % akkaVersion
     lazy val testkit       = namespace %% "akka-testkit"        % akkaVersion
+  }
 
+  private[this] object mongo {
+    lazy val driver = "org.mongodb.scala" %% "mongo-scala-driver" % mongoDBVersion
+  }
+
+  private[this] object aws {
+    lazy val dynamodb = "software.amazon.awssdk" % "dynamodb" % awsDynamoDBVersion
   }
 
   private[this] object pagopa {
     lazy val namespace = "it.pagopa"
     lazy val commons   = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt       = namespace %% "interop-commons-jwt"   % commonsVersion
-  }
-
-  private[this] object nimbus {
-    lazy val namespace = "com.nimbusds"
-    lazy val joseJwt   = namespace % "nimbus-jose-jwt" % nimbusVersion
-  }
-
-  private[this] object bouncycastle {
-    lazy val namespace = "org.bouncycastle"
-    lazy val provider  = namespace % "bcprov-jdk15on" % bouncycastleVersion
-    lazy val kix       = namespace % "bcpkix-jdk15on" % bouncycastleVersion
-  }
-
-  private[this] object scalpb {
-    lazy val namespace = "com.thesamet.scalapb"
-    lazy val core      = namespace %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
   }
 
   private[this] object cats {
@@ -121,8 +112,7 @@ object Dependencies {
       akka.serialization          % Compile,
       akka.slf4j                  % Compile,
       akka.stream                 % Compile,
-      bouncycastle.kix            % Compile,
-      bouncycastle.provider       % Compile,
+      aws.dynamodb                % Compile,
       cats.core                   % Compile,
       kamon.core                  % Compile,
       kamon.statusPage            % Compile,
@@ -136,11 +126,10 @@ object Dependencies {
       kamon.jdbc                  % Compile,
       kamon.prometheus            % Compile,
       logback.classic             % Compile,
+      mongo.driver                % Compile,
       mustache.mustache           % Compile,
-      nimbus.joseJwt              % Compile,
       pagopa.commons              % Compile,
       pagopa.jwt                  % Compile,
-      scalpb.core                 % "protobuf",
       akka.httpTestkit            % Test,
       akka.streamTestkit          % Test,
       akka.testkit                % Test,

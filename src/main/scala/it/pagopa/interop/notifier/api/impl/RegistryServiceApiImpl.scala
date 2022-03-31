@@ -36,9 +36,9 @@ class RegistryServiceApiImpl(persistenceService: PersistenceService)(implicit ec
     logger.info("Creating Organization {}", organization)
 
     onComplete(persistenceService.addOrganization(organization)) {
-      case Success(status) if status == true =>
+      case Success(_) =>
         addOrganization201
-      case _                                 =>
+      case _          =>
         logger.error(s"Persistence error while creating organization")
         val problem = problemOf(StatusCodes.BadRequest, OrganizationCreationFailed)
         addOrganization400(problem)
@@ -53,19 +53,15 @@ class RegistryServiceApiImpl(persistenceService: PersistenceService)(implicit ec
   override def deleteOrganization(
     organizationId: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
-    val result: Future[Boolean] = for {
+    val result: Future[Unit] = for {
       organizationUUID <- organizationId.toFutureUUID
       result           <- persistenceService.deleteOrganization(organizationUUID)
     } yield result
 
     onComplete(result) {
-      case Success(status) if status == true =>
+      case Success(_)  =>
         deleteOrganization204
-      case Success(_)                        =>
-        logger.error(s"Persistence error while deleting organization")
-        val problem = problemOf(StatusCodes.BadRequest, OrganizationNotFound(organizationId))
-        deleteOrganization400(problem)
-      case Failure(ex)                       =>
+      case Failure(ex) =>
         logger.error(s"Error deleting organization $organizationId  - ${ex.getMessage}")
         val problem = problemOf(StatusCodes.BadRequest, OrganizationDeletionFailed(organizationId))
         deleteOrganization400(problem)
@@ -104,19 +100,15 @@ class RegistryServiceApiImpl(persistenceService: PersistenceService)(implicit ec
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Boolean] = for {
+    val result: Future[Unit] = for {
       organizationUUID <- organizationId.toFutureUUID
       result           <- persistenceService.updateOrganization(organizationUUID, organizationUpdatePayload)
     } yield result
 
     onComplete(result) {
-      case Success(status) if status == true =>
+      case Success(_)  =>
         updateOrganization204
-      case Success(_)                        =>
-        logger.error(s"Persistence error while updating organization")
-        val problem = problemOf(StatusCodes.BadRequest, OrganizationNotFound(organizationId))
-        updateOrganization400(problem)
-      case Failure(ex)                       =>
+      case Failure(ex) =>
         logger.error(s"Error updating organization $organizationId  - ${ex.getMessage}")
         val problem = problemOf(StatusCodes.BadRequest, OrganizationUpdateFailed(organizationId))
         updateOrganization400(problem)

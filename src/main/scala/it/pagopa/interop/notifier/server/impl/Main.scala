@@ -26,7 +26,7 @@ import it.pagopa.interop.notifier.api.{HealthApi, RegistryApi}
 import it.pagopa.interop.notifier.common.ApplicationConfiguration
 import it.pagopa.interop.notifier.common.system.{classicActorSystem, executionContext}
 import it.pagopa.interop.notifier.server.Controller
-import it.pagopa.interop.notifier.service.impl.DynamoPersistentService
+import it.pagopa.interop.notifier.service.impl.MongoDBPersistentService
 import kamon.Kamon
 
 import scala.concurrent.Future
@@ -58,7 +58,7 @@ object Main extends App with CORSSupport {
 
     val registryApi: RegistryApi =
       new RegistryApi(
-        new RegistryServiceApiImpl(new DynamoPersistentService),
+        new RegistryServiceApiImpl(new MongoDBPersistentService(ApplicationConfiguration.dbConfiguration)),
         RegistryApiMarshallerImpl,
         jwtReader.OAuth2JWTValidatorAsContexts
       )

@@ -6,8 +6,8 @@ import java.util.UUID
 import scala.concurrent.Future
 
 trait PersistenceService {
-  def addOrganization(organization: Organization): Future[Boolean]
-  def updateOrganization(organizationId: UUID, organization: OrganizationUpdatePayload): Future[Boolean]
-  def deleteOrganization(organizationId: UUID): Future[Boolean]
+  def addOrganization(organization: Organization): Future[Unit]
+  def updateOrganization(organizationId: UUID, organization: OrganizationUpdatePayload): Future[Unit]
+  def deleteOrganization(organizationId: UUID): Future[Unit]
   def getOrganization(organizationId: UUID): Future[Organization]
 }

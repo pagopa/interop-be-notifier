@@ -35,6 +35,7 @@ object Dependencies {
     lazy val namespace = "it.pagopa"
     lazy val commons   = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt       = namespace %% "interop-commons-jwt"   % commonsVersion
+    lazy val vault     = namespace %% "interop-commons-vault" % commonsVersion
   }
 
   private[this] object cats {
@@ -130,6 +131,7 @@ object Dependencies {
       mustache.mustache           % Compile,
       pagopa.commons              % Compile,
       pagopa.jwt                  % Compile,
+      pagopa.vault                % Compile,
       akka.httpTestkit            % Test,
       akka.streamTestkit          % Test,
       akka.testkit                % Test,

@@ -29,6 +29,11 @@ object Dependencies {
 
   private[this] object aws {
     lazy val dynamodb = "software.amazon.awssdk" % "dynamodb" % awsDynamoDBVersion
+    lazy val sqs      = "software.amazon.awssdk" % "sqs"      % awsSqsVersion
+  }
+
+  private[this] object spray {
+    lazy val spray = "io.spray" %% "spray-json" % sprayJsonVersion
   }
 
   private[this] object pagopa {
@@ -132,20 +137,15 @@ object Dependencies {
       pagopa.commons              % Compile,
       pagopa.jwt                  % Compile,
       pagopa.vault                % Compile,
+      aws.sqs                     % Compile,
       akka.httpTestkit            % Test,
       akka.streamTestkit          % Test,
       akka.testkit                % Test,
       scalatest.core              % Test,
       scalamock.core              % Test
     )
+    lazy val commons: Seq[ModuleID]   = List(spray.spray % Compile)
     lazy val client: Seq[ModuleID]    =
-      Seq(
-        akka.stream     % Compile,
-        akka.http       % Compile,
-        akka.httpJson4s % Compile,
-        akka.slf4j      % Compile,
-        json4s.jackson  % Compile,
-        json4s.ext      % Compile
-      )
+      Seq(akka.http % Compile, akka.httpJson4s % Compile, aws.sqs % Compile)
   }
 }

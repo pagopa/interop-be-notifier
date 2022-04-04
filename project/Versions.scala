@@ -5,6 +5,8 @@ object Versions {
   lazy val akkaPersistenceS3Version = "1.0.16"
   lazy val akkaVersion              = "2.6.17"
   lazy val awsDynamoDBVersion       = "2.17.157"
+  lazy val awsSqsVersion            = "2.17.160"
+  lazy val sprayJsonVersion         = "1.3.6"
   lazy val bouncycastleVersion      = "1.70"
   lazy val catsVersion              = "2.7.0"
   lazy val jacksonVersion   = "2.11.4" // This cannot be updated yet because akka-serialization use 2.11.x version

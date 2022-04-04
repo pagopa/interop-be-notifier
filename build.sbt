@@ -40,18 +40,6 @@ generateCode := {
              |                               -p dateLibrary=java8
              |                               -p entityStrictnessTimeout=15
              |                               -o generated""".stripMargin).!!
-
-  Process(s"""openapi-generator-cli generate -t template/scala-akka-http-client
-             |                               -i src/main/resources/interface-specification.yml
-             |                               -g scala-akka
-             |                               -p projectName=${projectName.value}
-             |                               -p invokerPackage=it.pagopa.${packagePrefix.value}.client.invoker
-             |                               -p modelPackage=it.pagopa.${packagePrefix.value}.client.model
-             |                               -p apiPackage=it.pagopa.${packagePrefix.value}.client.api
-             |                               -p modelPropertyNaming=original
-             |                               -p dateLibrary=java8
-             |                               -o client""".stripMargin).!!
-
 }
 
 (Compile / compile) := ((Compile / compile) dependsOn generateCode).value
@@ -67,12 +55,24 @@ cleanFiles += baseDirectory.value / "client" / "src"
 
 cleanFiles += baseDirectory.value / "client" / "target"
 
+cleanFiles += baseDirectory.value / "commons" / "target"
+
 ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 lazy val generated = project
   .in(file("generated"))
   .settings(scalacOptions := Seq(), scalafmtOnCompile := true)
+  .enablePlugins(NoPublishPlugin)
   .setupBuildInfo
+
+lazy val `notifier-commons` = project
+  .in(file("commons"))
+  .settings(
+    name                := "interop-be-notifier-commons",
+    scalafmtOnCompile   := true,
+    libraryDependencies := Dependencies.Jars.commons
+  )
+  .enablePlugins(NoPublishPlugin)
 
 lazy val client = project
   .in(file("client"))
@@ -92,6 +92,7 @@ lazy val client = project
         Some("releases" at nexus + "maven-releases/")
     }
   )
+  .dependsOn(`notifier-commons`)
 
 lazy val root = (project in file("."))
   .settings(
@@ -109,7 +110,7 @@ lazy val root = (project in file("."))
     dockerCommands += Cmd("LABEL", s"org.opencontainers.image.source https://github.com/pagopa/${name.value}")
   )
   .aggregate(client)
-  .dependsOn(generated)
+  .dependsOn(`notifier-commons`, generated)
   .enablePlugins(JavaAppPackaging, JavaAgent)
   .setupBuildInfo
 

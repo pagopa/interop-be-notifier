@@ -57,9 +57,10 @@ class QueueReader(queueUrl: String, awsCredentials: AwsBasicCredentials)(implici
   } yield result
 
   def handle[T](f: Message => Future[T]): Future[Unit] = {
-    def loop(f: Message => Future[T]): Future[List[T]] =
-      handleN[T](10)(f).flatMap(_ => loop(f)).recoverWith(_ => loop(f))
-    loop(f).void
+    // Submitting to an ExecutionContext introduces an async boundary that reset the stack,
+    // that makes Future behave like it's trampolining, so this function is stack safe.
+    def loop: Future[List[T]] = handleN[T](10)(f).flatMap(_ => loop).recoverWith(_ => loop)
+    loop.void
   }
 
 }

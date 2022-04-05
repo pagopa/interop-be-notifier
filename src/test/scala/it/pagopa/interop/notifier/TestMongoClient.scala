@@ -1,7 +1,7 @@
 package it.pagopa.interop.notifier
 
 import com.typesafe.config.{Config, ConfigFactory}
-import it.pagopa.interop.notifier.common.DatabaseConfiguration
+import it.pagopa.interop.notifier.common.system.DatabaseConfiguration
 import it.pagopa.interop.notifier.model.{Organization, OrganizationUpdatePayload}
 import it.pagopa.interop.notifier.service.impl.MongoDBPersistentService
 

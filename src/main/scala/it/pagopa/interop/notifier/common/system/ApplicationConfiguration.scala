@@ -1,4 +1,4 @@
-package it.pagopa.interop.notifier.common
+package it.pagopa.interop.notifier.common.system
 
 import com.typesafe.config.{Config, ConfigFactory}
 

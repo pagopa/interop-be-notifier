@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+import "scalapb/scalapb.proto";
+
+option (scalapb.options) = {
+  package_name: "it.pagopa.interop.notifier.model.persistence.serializer.v1"
+};
+
+message OrganizationV1 {
+  required string organizationId = 1;
+  required string notificationURL = 2;
+  required string audience = 3;
+}

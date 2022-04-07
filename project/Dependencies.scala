@@ -5,22 +5,35 @@ import sbt._
 object Dependencies {
 
   private[this] object akka {
-    lazy val namespace     = "com.typesafe.akka"
-    lazy val actorTyped    = namespace                       %% "akka-actor-typed"           % akkaVersion
-    lazy val actor         = namespace                       %% "akka-actor"                 % akkaVersion
-    lazy val serialization = namespace                       %% "akka-serialization-jackson" % akkaVersion
-    lazy val stream        = namespace                       %% "akka-stream"                % akkaVersion
-    lazy val clusterTools  = namespace                       %% "akka-cluster-tools"         % akkaVersion
-    lazy val http          = namespace                       %% "akka-http"                  % akkaHttpVersion
-    lazy val httpJson      = namespace                       %% "akka-http-spray-json"       % akkaHttpVersion
-    lazy val httpJson4s    = "de.heikoseeberger"             %% "akka-http-json4s"           % akkaHttpJson4sVersion
-    lazy val management    = "com.lightbend.akka.management" %% "akka-management"            % akkaManagementVersion
+    lazy val namespace              = "com.typesafe.akka"
+    lazy val actorTyped             = namespace            %% "akka-actor-typed"             % akkaVersion
+    lazy val clusterTyped           = namespace            %% "akka-cluster-typed"           % akkaVersion
+    lazy val clusterSharding        = namespace            %% "akka-cluster-sharding-typed"  % akkaVersion
+    lazy val discovery              = namespace            %% "akka-discovery"               % akkaVersion
+    lazy val persistence            = namespace            %% "akka-persistence-typed"       % akkaVersion
+    lazy val persistenceQuery       = namespace            %% "akka-persistence-query"       % akkaVersion
+    lazy val projection             = "com.lightbend.akka" %% "akka-projection-eventsourced" % projectionVersion
+    lazy val projectionSlick        = "com.lightbend.akka" %% "akka-projection-slick"        % slickProjectionVersion
+    lazy val clusterTools           = namespace            %% "akka-cluster-tools"           % akkaVersion
+    lazy val persistenceJdbc        = "com.lightbend.akka" %% "akka-persistence-jdbc"        % jdbcPersistenceVersion
+    lazy val slick                  = "com.typesafe.slick" %% "slick"                        % slickVersion
+    lazy val slickHikari            = "com.typesafe.slick" %% "slick-hikaricp"               % slickVersion
+    lazy val s3Journal              = "com.github.j5ik2o"  %% "akka-persistence-s3-journal"  % s3Persistence
+    lazy val s3Snapshot             = "com.github.j5ik2o"  %% "akka-persistence-s3-snapshot" % s3Persistence
+    lazy val stream                 = namespace            %% "akka-stream-typed"            % akkaVersion
+    lazy val http                   = namespace            %% "akka-http"                    % akkaHttpVersion
+    lazy val httpJson               = namespace            %% "akka-http-spray-json"         % akkaHttpVersion
+    lazy val httpJson4s             = "de.heikoseeberger"  %% "akka-http-json4s"             % httpJson4sVersion
+    lazy val discoveryKubernetesApi =
+      "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % akkaManagementVersion
+    lazy val clusterBootstrap =
+      "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % akkaManagementVersion
+    lazy val clusterHttp = "com.lightbend.akka.management" %% "akka-management-cluster-http" % akkaManagementVersion
+    lazy val slf4j       = namespace                       %% "akka-slf4j"                   % akkaVersion
+    lazy val testkit     = namespace                       %% "akka-actor-testkit-typed"     % akkaVersion
+    lazy val management  = "com.lightbend.akka.management" %% "akka-management"              % akkaManagementVersion
     lazy val managementLogLevels =
       "com.lightbend.akka.management" %% "akka-management-loglevels-logback" % akkaManagementVersion
-    lazy val slf4j         = namespace %% "akka-slf4j"          % akkaVersion
-    lazy val httpTestkit   = namespace %% "akka-http-testkit"   % akkaHttpVersion
-    lazy val streamTestkit = namespace %% "akka-stream-testkit" % akkaVersion
-    lazy val testkit       = namespace %% "akka-testkit"        % akkaVersion
   }
 
   private[this] object mongo {
@@ -48,15 +61,16 @@ object Dependencies {
     lazy val core      = namespace %% "cats-core" % catsVersion
   }
 
-  private[this] object json4s {
-    lazy val namespace = "org.json4s"
-    lazy val jackson   = namespace %% "json4s-jackson" % json4sVersion
-    lazy val ext       = namespace %% "json4s-ext"     % json4sVersion
-  }
-
   private[this] object logback {
     lazy val namespace = "ch.qos.logback"
     lazy val classic   = namespace % "logback-classic" % logbackVersion
+  }
+
+  lazy val Protobuf = "protobuf"
+
+  private[this] object scalaprotobuf {
+    lazy val namespace = "com.thesamet.scalapb"
+    lazy val core      = namespace %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
   }
 
   private[this] object kamon {
@@ -108,38 +122,50 @@ object Dependencies {
       // For making Java 12 happy
       "javax.annotation"          % "javax.annotation-api" % "1.3.2" % "compile",
       //
-      akka.actor                  % Compile,
       akka.actorTyped             % Compile,
+      akka.clusterBootstrap       % Compile,
+      akka.clusterHttp            % Compile,
+      akka.clusterSharding        % Compile,
       akka.clusterTools           % Compile,
+      akka.clusterTyped           % Compile,
+      akka.discovery              % Compile,
+      akka.discoveryKubernetesApi % Compile,
       akka.http                   % Compile,
       akka.httpJson               % Compile,
       akka.management             % Compile,
       akka.managementLogLevels    % Compile,
-      akka.serialization          % Compile,
+      akka.persistence            % Compile,
+      akka.persistenceJdbc        % Compile,
+      akka.persistenceQuery       % Compile,
+      akka.projection             % Compile,
+      akka.projectionSlick        % Compile,
+      akka.s3Journal              % Compile,
+      akka.s3Snapshot             % Compile,
       akka.slf4j                  % Compile,
+      akka.slick                  % Compile,
+      akka.slickHikari            % Compile,
       akka.stream                 % Compile,
       aws.dynamodb                % Compile,
+      aws.sqs                     % Compile,
       cats.core                   % Compile,
-      kamon.core                  % Compile,
-      kamon.statusPage            % Compile,
-      kamon.systemMetrics         % Compile,
-      kamon.executors             % Compile,
       kamon.akka                  % Compile,
       kamon.akkaHttp              % Compile,
+      kamon.core                  % Compile,
+      kamon.executors             % Compile,
       kamon.instrumentationCommon % Compile,
-      kamon.scalaFuture           % Compile,
-      kamon.logback               % Compile,
       kamon.jdbc                  % Compile,
+      kamon.logback               % Compile,
       kamon.prometheus            % Compile,
+      kamon.scalaFuture           % Compile,
+      kamon.statusPage            % Compile,
+      kamon.systemMetrics         % Compile,
       logback.classic             % Compile,
       mongo.driver                % Compile,
       mustache.mustache           % Compile,
       pagopa.commons              % Compile,
       pagopa.jwt                  % Compile,
       pagopa.vault                % Compile,
-      aws.sqs                     % Compile,
-      akka.httpTestkit            % Test,
-      akka.streamTestkit          % Test,
+      scalaprotobuf.core          % Protobuf,
       akka.testkit                % Test,
       scalatest.core              % Test,
       scalamock.core              % Test

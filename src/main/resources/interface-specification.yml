@@ -149,7 +149,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Client not found
+          description: Organization not found
           content:
             application/problem+json:
               schema:
@@ -178,6 +178,12 @@ paths:
           description: Organization updated
         '400':
           description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Organization not found
           content:
             application/problem+json:
               schema:

@@ -65,7 +65,7 @@ class QueueReader(queueUrl: String, awsCredentials: AwsBasicCredentials)(implici
 
 }
 
-object Foo extends App {
+/*object Foo extends App {
   import java.util.UUID
   import it.pagopa.interop.notifier.message.{Message, MessagePayload}
   import scala.concurrent.Await
@@ -86,4 +86,4 @@ object Foo extends App {
   val response = queue.handleN(10)(m => Future(println(m.payload.eventype)))
 
   Await.ready(response.map(println), Duration.Inf)
-}
+}*/

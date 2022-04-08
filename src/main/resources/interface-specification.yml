@@ -22,13 +22,8 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
-  - name: registry
-    description: Holds information about notification subscribers
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
-  - name: notifications
-    description: Peforms event notifications
+  - name: events
+    description: Returns events
     externalDocs:
       description: Find out more
       url: http://swagger.io
@@ -47,149 +42,55 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  /organizations:
-    parameters:
-      - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
-    post:
-      tags:
-        - registry
-      summary: Add organization to registry
-      description: Adds organization information to registry
-      operationId: addOrganization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Organization'
-      responses:
-        '201':
-          description: Organization created
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '401':
-          description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-  /organizations/{organizationId}:
+  '/events':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     get:
-      description: Retrieves an organization from the registry
       tags:
-        - registry
-      summary: Gets an organization from the registry
-      operationId: getOrganization
+        - events
+      summary: Get list of events
+      description: Retrieves the list of events sent to the caller
+      operationId: getEventsFromId
+      security:
+        - bearerAuth: [ ]
       parameters:
-        - name: organizationId
-          in: path
-          description: The organization id
+        - name: lastEventId
+          in: query
+          description: returns organization events starting from this id
           required: true
           schema:
             type: string
+        - name: limit
+          in: query
+          description: the number of events returned by this response
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+            default: 100
       responses:
         '200':
-          description: Organization retrieved
+          description: Messages
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Organization'
+                $ref: '#/components/schemas/Messages'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Unauthorized
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
         '404':
-          description: Organization not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-    delete:
-      description: Deletes an organization
-      tags:
-        - registry
-      summary: Deletes an organization
-      operationId: deleteOrganization
-      parameters:
-        - name: organizationId
-          in: path
-          description: The Organization id
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Organization deleted
-        '401':
-          description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Organization not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-    put:
-      tags:
-        - registry
-      summary: Update organization to registry
-      description: Updates organization information on registry
-      operationId: updateOrganization
-      parameters:
-        - name: organizationId
-          in: path
-          description: The organization id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrganizationUpdatePayload'
-      responses:
-        '204':
-          description: Organization updated
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Organization not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '401':
-          description: Unauthorized
+          description: Events not found
           content:
             application/problem+json:
               schema:
@@ -207,32 +108,42 @@ components:
       schema:
         type: string
   schemas:
-    Organization:
-      description: Organization request payload
+    Messages:
       type: object
       properties:
-        notificationURL:
+        limit:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        nextId:
           type: string
-        audience:
-          type: string
-        organizationId:
-          type: string
-          format: uuid
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
       required:
-        - notificationURL
-        - audience
-        - organizationId
-    OrganizationUpdatePayload:
-      description: Organization update payload
-      type: object
+        - messages
+        - size
+        - nextId
+        - limit
+    Message:
       properties:
-        notificationURL:
+        eventId:
           type: string
-        audience:
+        eventType:
           type: string
+        objectType:
+          type: string
+        objectId:
+          additionalProperties:
+            type: string
       required:
-        - notificationURL
-        - audience
+        - eventId
+        - eventType
+        - objectType
+        - objectId
     Problem:
       properties:
         type:

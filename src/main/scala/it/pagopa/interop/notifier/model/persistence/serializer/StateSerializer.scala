@@ -1,12 +1,12 @@
 package it.pagopa.interop.notifier.model.persistence.serializer
 
 import akka.serialization.SerializerWithStringManifest
-import it.pagopa.interop.notifier.model.persistence.OrganizationNotificationEventIdState
+import it.pagopa.interop.notifier.model.persistence.State
 import it.pagopa.interop.notifier.model.persistence.serializer.v1._
 
 import java.io.NotSerializableException
 
-class OrganizationNotificationEventIdStateSerializer extends SerializerWithStringManifest {
+class StateSerializer extends SerializerWithStringManifest {
 
   final val version1: String = "1"
 
@@ -16,11 +16,11 @@ class OrganizationNotificationEventIdStateSerializer extends SerializerWithStrin
 
   override def manifest(o: AnyRef): String = s"${o.getClass.getName}|$currentVersion"
 
-  final val className: String = classOf[OrganizationNotificationEventIdState].getName
+  final val className: String = classOf[State].getName
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
-    case s: OrganizationNotificationEventIdState => serialize(s, className, currentVersion)
-    case _                                       =>
+    case s: State => serialize(s, className, currentVersion)
+    case _        =>
       throw new NotSerializableException(
         s"Unable to handle manifest: [[${manifest(o)}]], currentVersion: [[$currentVersion]] "
       )
@@ -29,7 +29,7 @@ class OrganizationNotificationEventIdStateSerializer extends SerializerWithStrin
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef =
     manifest.split('|').toList match {
       case `className` :: `version1` :: Nil =>
-        deserialize(v1.state.OrganizationNotificationEventIdStateV1, bytes, manifest, currentVersion)
+        deserialize(v1.state.StateV1, bytes, manifest, currentVersion)
       case _                                =>
         throw new NotSerializableException(
           s"Unable to handle manifest: [[$manifest]], currentVersion: [[$currentVersion]] "

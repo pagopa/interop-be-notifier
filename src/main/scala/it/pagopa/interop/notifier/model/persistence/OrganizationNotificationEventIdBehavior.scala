@@ -7,7 +7,6 @@ import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, RetentionCriteria}
 import it.pagopa.interop.notifier.error.NotifierErrors.OrganizationNotFound
-import it.pagopa.interop.notifier.model.persistence.organization.PersistentOrganizationEvent
 
 import java.time.temporal.ChronoUnit
 import scala.concurrent.duration.{DurationInt, DurationLong}
@@ -17,71 +16,55 @@ object OrganizationNotificationEventIdBehavior {
 
   def commandHandler(
     shard: ActorRef[ClusterSharding.ShardCommand],
-    context: ActorContext[OrganizationNotificationCommand]
-  ): (
-    OrganizationNotificationEventIdState,
-    OrganizationNotificationCommand
-  ) => Effect[OrganizationNotificationIdEvent, OrganizationNotificationEventIdState] = { (state, command) =>
+    context: ActorContext[Command]
+  ): (State, Command) => Effect[Event, State] = { (state, command) =>
     val idleTimeout = context.system.settings.config.getDuration("notifier.idle-timeout")
-    context.setReceiveTimeout(idleTimeout.get(ChronoUnit.SECONDS) seconds, NotificationEventIdle)
+    context.setReceiveTimeout(idleTimeout.get(ChronoUnit.SECONDS) seconds, Idle)
     command match {
       case UpdateOrganizationNotificationEventId(organizationId, replyTo) =>
         val nextId: Long = state.identifiers.get(organizationId.toString).getOrElse(0L) + 1L
 
         Effect
           .persist(EventIdAdded(organizationId.toString, nextId))
-          .thenRun((_: OrganizationNotificationEventIdState) =>
-            replyTo ! StatusReply.Success(PersistentOrganizationEvent(organizationId, nextId))
-          )
+          .thenRun((_: State) => replyTo ! StatusReply.Success(PersistentOrganizationEvent(organizationId, nextId)))
 
       case GetOrganizationNotificationEventId(organizationId, replyTo) =>
         state.identifiers.get(organizationId.toString) match {
           case Some(currentId) =>
             replyTo ! StatusReply.Success(PersistentOrganizationEvent(organizationId, currentId))
-            Effect.none[OrganizationNotificationIdEvent, OrganizationNotificationEventIdState]
+            Effect.none[Event, State]
           case None            => commandError(replyTo, OrganizationNotFound(organizationId.toString))
         }
 
-      case NotificationEventIdle =>
+      case Idle =>
         shard ! ClusterSharding.Passivate(context.self)
         context.log.info(s"Passivate shard: ${shard.path.name}")
-        Effect.none[OrganizationNotificationIdEvent, OrganizationNotificationEventIdState]
+        Effect.none[Event, State]
     }
   }
 
-  private def commandError[T](
-    replyTo: ActorRef[StatusReply[T]],
-    error: Throwable
-  ): Effect[OrganizationNotificationIdEvent, OrganizationNotificationEventIdState] = {
+  private def commandError[T](replyTo: ActorRef[StatusReply[T]], error: Throwable): Effect[Event, State] = {
     replyTo ! StatusReply.Error[T](error)
-    Effect.none[OrganizationNotificationIdEvent, OrganizationNotificationEventIdState]
+    Effect.none[Event, State]
   }
 
-  val eventHandler
-    : (OrganizationNotificationEventIdState, OrganizationNotificationIdEvent) => OrganizationNotificationEventIdState =
+  val eventHandler: (State, Event) => State =
     (state, event) =>
       event match {
         case EventIdAdded(client, nextId) => state.increaseEventId(client, nextId)
       }
 
-  val TypeKey: EntityTypeKey[OrganizationNotificationCommand] =
-    EntityTypeKey[OrganizationNotificationCommand]("interop-be-notifier-notification-id-persistence")
+  val TypeKey: EntityTypeKey[Command] =
+    EntityTypeKey[Command]("interop-be-notifier-notification-id-persistence")
 
-  def apply(
-    shard: ActorRef[ClusterSharding.ShardCommand],
-    persistenceId: PersistenceId
-  ): Behavior[OrganizationNotificationCommand] = {
+  def apply(shard: ActorRef[ClusterSharding.ShardCommand], persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>
       context.log.info(s"Starting Key Shard ${persistenceId.id}")
       val numberOfEvents =
         context.system.settings.config.getInt("notifier.number-of-events-before-snapshot")
-      EventSourcedBehavior[
-        OrganizationNotificationCommand,
-        OrganizationNotificationIdEvent,
-        OrganizationNotificationEventIdState
-      ](
+      EventSourcedBehavior[Command, Event, State](
         persistenceId = persistenceId,
-        emptyState = OrganizationNotificationEventIdState.empty,
+        emptyState = State.empty,
         commandHandler = commandHandler(shard, context),
         eventHandler = eventHandler
       ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = numberOfEvents, keepNSnapshots = 1))

@@ -27,18 +27,13 @@ import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, Default
 import it.pagopa.interop.notifier.api.impl.{
   HealthApiMarshallerImpl,
   HealthServiceApiImpl,
-  RegistryApiMarshallerImpl,
-  RegistryServiceApiImpl,
+  EventsApiMarshallerImpl,
+  EventsServiceApiImpl,
   problemOf
 }
-import it.pagopa.interop.notifier.api.{HealthApi, RegistryApi}
+import it.pagopa.interop.notifier.api.{HealthApi, EventsApi}
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
-import it.pagopa.interop.notifier.model.persistence.{
-  OrganizationCommand,
-  OrganizationNotificationCommand,
-  OrganizationNotificationEventIdBehavior,
-  OrganizationPersistentBehavior
-}
+import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotificationEventIdBehavior}
 import it.pagopa.interop.notifier.server.Controller
 import kamon.Kamon
 
@@ -71,15 +66,7 @@ object Main extends App with CORSSupport with VaultServiceDependency {
 
   Kamon.init()
 
-  lazy val behaviorFactory: EntityContext[OrganizationCommand] => Behavior[OrganizationCommand] = { entityContext =>
-    OrganizationPersistentBehavior(
-      entityContext.shard,
-      PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId)
-    )
-  }
-
-  lazy val notificationBehaviorFactory
-    : EntityContext[OrganizationNotificationCommand] => Behavior[OrganizationNotificationCommand] = { entityContext =>
+  lazy val notificationBehaviorFactory: EntityContext[Command] => Behavior[Command] = { entityContext =>
     OrganizationNotificationEventIdBehavior(
       entityContext.shard,
       PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId)
@@ -101,22 +88,13 @@ object Main extends App with CORSSupport with VaultServiceDependency {
 
         val sharding: ClusterSharding = ClusterSharding(context.system)
 
-        val organizationPersistentEntity: Entity[OrganizationCommand, ShardingEnvelope[OrganizationCommand]] =
-          Entity(OrganizationPersistentBehavior.TypeKey)(behaviorFactory)
-
-        val organizationNotificationEntity
-          : Entity[OrganizationNotificationCommand, ShardingEnvelope[OrganizationNotificationCommand]] =
+        val organizationNotificationEntity: Entity[Command, ShardingEnvelope[Command]] =
           Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
-        val _ = sharding.init(organizationPersistentEntity)
         val _ = sharding.init(organizationNotificationEntity)
 
-        val registryApi: RegistryApi =
-          new RegistryApi(
-            new RegistryServiceApiImpl(context.system, sharding, organizationPersistentEntity),
-            RegistryApiMarshallerImpl,
-            jwtReader.OAuth2JWTValidatorAsContexts
-          )
+        val eventsApi: EventsApi =
+          new EventsApi(new EventsServiceApiImpl(), EventsApiMarshallerImpl, jwtReader.OAuth2JWTValidatorAsContexts)
 
         val healthApi: HealthApi = new HealthApi(
           new HealthServiceApiImpl(),
@@ -127,8 +105,8 @@ object Main extends App with CORSSupport with VaultServiceDependency {
         val _ = AkkaManagement.get(classicSystem).start()
 
         val controller: Controller = new Controller(
+          eventsApi,
           healthApi,
-          registryApi,
           validationExceptionToRoute = Some(report => {
             val error =
               problemOf(

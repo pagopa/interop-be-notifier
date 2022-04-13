@@ -5,8 +5,9 @@ ThisBuild / scalaVersion        := "2.13.8"
 ThisBuild / organization        := "it.pagopa"
 ThisBuild / organizationName    := "Pagopa S.p.A."
 ThisBuild / libraryDependencies := Dependencies.Jars.`server`
+
 ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
-ThisBuild / version             := ComputeVersion.version
+ThisBuild / version := ComputeVersion.version
 
 ThisBuild / resolvers += "Pagopa Nexus Snapshots" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-snapshots/"
 ThisBuild / resolvers += "Pagopa Nexus Releases" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-releases/"
@@ -36,10 +37,20 @@ generateCode := {
              |                               -p invokerPackage=it.pagopa.${packagePrefix.value}.server
              |                               -p modelPackage=it.pagopa.${packagePrefix.value}.model
              |                               -p apiPackage=it.pagopa.${packagePrefix.value}.api
-             |                               -p modelPropertyNaming=original
              |                               -p dateLibrary=java8
              |                               -p entityStrictnessTimeout=15
              |                               -o generated""".stripMargin).!!
+
+  Process(s"""openapi-generator-cli generate -t template/scala-akka-http-client
+             |                               -i src/main/resources/interface-specification.yml
+             |                               -g scala-akka
+             |                               -p projectName=${projectName.value}
+             |                               -p invokerPackage=it.pagopa.${packagePrefix.value}.client.invoker
+             |                               -p modelPackage=it.pagopa.${packagePrefix.value}.client.model
+             |                               -p apiPackage=it.pagopa.${packagePrefix.value}.client.api
+             |                               -p dateLibrary=java8
+             |                               -o client""".stripMargin).!!
+
 }
 
 (Compile / compile) := ((Compile / compile) dependsOn generateCode).value
@@ -55,24 +66,12 @@ cleanFiles += baseDirectory.value / "client" / "src"
 
 cleanFiles += baseDirectory.value / "client" / "target"
 
-cleanFiles += baseDirectory.value / "commons" / "target"
-
 ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 lazy val generated = project
   .in(file("generated"))
   .settings(scalacOptions := Seq(), scalafmtOnCompile := true)
-  .enablePlugins(NoPublishPlugin)
   .setupBuildInfo
-
-lazy val `notifier-commons` = project
-  .in(file("commons"))
-  .settings(
-    name                := "interop-be-notifier-commons",
-    scalafmtOnCompile   := true,
-    libraryDependencies := Dependencies.Jars.commons
-  )
-  .enablePlugins(NoPublishPlugin)
 
 lazy val client = project
   .in(file("client"))
@@ -92,7 +91,6 @@ lazy val client = project
         Some("releases" at nexus + "maven-releases/")
     }
   )
-  .dependsOn(`notifier-commons`)
 
 lazy val root = (project in file("."))
   .settings(
@@ -103,14 +101,14 @@ lazy val root = (project in file("."))
     dockerRepository            := Some(System.getenv("DOCKER_REPO")),
     dockerBaseImage             := "adoptopenjdk:11-jdk-hotspot",
     daemonUser                  := "daemon",
-    Docker / version            := (ThisBuild / version).value.replaceAll("-SNAPSHOT", "-latest").toLowerCase,
+    Docker / version            := (ThisBuild / version).value.replace("-SNAPSHOT", "-latest").toLowerCase,
     Docker / packageName        := s"${name.value}",
     Docker / dockerExposedPorts := Seq(8080),
     Docker / maintainer         := "https://pagopa.it",
     dockerCommands += Cmd("LABEL", s"org.opencontainers.image.source https://github.com/pagopa/${name.value}")
   )
   .aggregate(client)
-  .dependsOn(`notifier-commons`, generated)
+  .dependsOn(generated)
   .enablePlugins(JavaAppPackaging, JavaAgent)
   .setupBuildInfo
 

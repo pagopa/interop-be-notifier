@@ -8,10 +8,10 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
-  implicit val problemErrorFormat: RootJsonFormat[ProblemError]   = jsonFormat2(ProblemError)
-  implicit val problemFormat: RootJsonFormat[Problem]             = jsonFormat5(Problem)
-  implicit val organizationFormat: RootJsonFormat[Message]        = jsonFormat4(Message)
-  implicit val organizationUpdateFormat: RootJsonFormat[Messages] = jsonFormat4(Messages)
+  implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
+  implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
+  implicit val messageFormat: RootJsonFormat[Message]           = jsonFormat4(Message)
+  implicit val messagesFormat: RootJsonFormat[Messages]         = jsonFormat4(Messages)
 
   // TODO implement this
   implicit class EnrichedMessages(private val response: Messages) extends AnyVal {

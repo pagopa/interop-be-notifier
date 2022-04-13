@@ -3,10 +3,8 @@ package it.pagopa.interop.notifier.model.persistence
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityTypeKey}
-import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, RetentionCriteria}
-import it.pagopa.interop.notifier.error.NotifierErrors.OrganizationNotFound
 
 import java.time.temporal.ChronoUnit
 import scala.concurrent.duration.{DurationInt, DurationLong}
@@ -26,14 +24,14 @@ object OrganizationNotificationEventIdBehavior {
 
         Effect
           .persist(EventIdAdded(organizationId.toString, nextId))
-          .thenRun((_: State) => replyTo ! StatusReply.Success(PersistentOrganizationEvent(organizationId, nextId)))
+          .thenRun((_: State) => replyTo ! Some(PersistentOrganizationEvent(organizationId, nextId)))
 
       case GetOrganizationNotificationEventId(organizationId, replyTo) =>
         state.identifiers.get(organizationId.toString) match {
           case Some(currentId) =>
-            replyTo ! StatusReply.Success(PersistentOrganizationEvent(organizationId, currentId))
+            replyTo ! Some(PersistentOrganizationEvent(organizationId, currentId))
             Effect.none[Event, State]
-          case None            => commandError(replyTo, OrganizationNotFound(organizationId.toString))
+          case None            => commandError(replyTo)
         }
 
       case Idle =>
@@ -43,8 +41,8 @@ object OrganizationNotificationEventIdBehavior {
     }
   }
 
-  private def commandError[T](replyTo: ActorRef[StatusReply[T]], error: Throwable): Effect[Event, State] = {
-    replyTo ! StatusReply.Error[T](error)
+  private def commandError[T](replyTo: ActorRef[Option[T]]): Effect[Event, State] = {
+    replyTo ! None
     Effect.none[Event, State]
   }
 

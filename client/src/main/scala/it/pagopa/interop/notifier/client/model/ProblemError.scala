@@ -13,13 +13,9 @@ package it.pagopa.interop.notifier.client.model
 
 import it.pagopa.interop.notifier.client.invoker.ApiModel
 
-
-case class ProblemError (
+case class ProblemError(
   /* Internal code of the error */
   code: String,
   /* A human readable explanation specific to this occurrence of the problem. */
   detail: String
 ) extends ApiModel
-
-
-

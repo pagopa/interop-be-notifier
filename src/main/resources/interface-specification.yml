@@ -57,10 +57,12 @@ paths:
       parameters:
         - name: lastEventId
           in: query
-          description: returns organization events starting from this id
+          description: returns organization events starting from this last received id
           required: true
           schema:
-            type: string
+            type: integer
+            format: int64
+            default: 0
         - name: limit
           in: query
           description: the number of events returned by this response
@@ -72,11 +74,11 @@ paths:
             default: 100
       responses:
         '200':
-          description: Messages
+          description: Events
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Messages'
+                $ref: '#/components/schemas/Events'
         '400':
           description: Bad request
           content:
@@ -90,7 +92,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Events not found
+          description: Institution not found
           content:
             application/problem+json:
               schema:
@@ -108,30 +110,24 @@ components:
       schema:
         type: string
   schemas:
-    Messages:
+    Events:
       type: object
       properties:
-        limit:
+        lastEventId:
           type: integer
-          format: int32
-        size:
-          type: integer
-          format: int32
-        nextId:
-          type: string
-        messages:
+          format: int64
+        events:
           type: array
           items:
-            $ref: '#/components/schemas/Message'
+            $ref: '#/components/schemas/Event'
       required:
-        - messages
-        - size
-        - nextId
-        - limit
-    Message:
+        - events
+        - lastEventId
+    Event:
       properties:
         eventId:
-          type: string
+          type: integer
+          format: int64
         eventType:
           type: string
         objectType:

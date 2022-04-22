@@ -11,7 +11,7 @@
  */
 package it.pagopa.interop.notifier.client.api
 
-import it.pagopa.interop.notifier.client.model.Messages
+import it.pagopa.interop.notifier.client.model.Events
 import it.pagopa.interop.notifier.client.model.Problem
 import it.pagopa.interop.notifier.client.invoker._
 import it.pagopa.interop.notifier.client.invoker.CollectionFormats._
@@ -23,37 +23,39 @@ object EventsApi {
 }
 
 class EventsApi(baseUrl: String) {
-  
+
   /**
    * Retrieves the list of events sent to the caller
    * 
    * Expected answers:
-   *   code 200 : Messages (Messages)
+   *   code 200 : Events (Events)
    *   code 400 : Problem (Bad request)
    *   code 401 : Problem (Unauthorized)
-   *   code 404 : Problem (Events not found)
+   *   code 404 : Problem (Institution not found)
    * 
    * Available security schemes:
    *   bearerAuth (http)
    * 
-   * @param lastEventId returns organization events starting from this id
+   * @param lastEventId returns organization events starting from this last received id
    * @param xCorrelationId 
    * @param xForwardedFor 
    * @param limit the number of events returned by this response
    */
-  def getEventsFromId(lastEventId: String, xCorrelationId: Option[String] = None, xForwardedFor: Option[String] = None, limit: Option[Int] = None)(implicit bearerToken: BearerToken): ApiRequest[Messages] =
-    ApiRequest[Messages](ApiMethods.GET, baseUrl, "/events", "application/json")
-      .withCredentials(bearerToken).withQueryParam("lastEventId", lastEventId)
+  def getEventsFromId(
+    lastEventId: Long,
+    xCorrelationId: Option[String] = None,
+    xForwardedFor: Option[String] = None,
+    limit: Option[Int] = None
+  )(implicit bearerToken: BearerToken): ApiRequest[Events] =
+    ApiRequest[Events](ApiMethods.GET, baseUrl, "/events", "application/json")
+      .withCredentials(bearerToken)
+      .withQueryParam("lastEventId", lastEventId)
       .withQueryParam("limit", limit)
       .withHeaderParam("X-Correlation-Id", xCorrelationId)
       .withHeaderParam("X-Forwarded-For", xForwardedFor)
-      .withSuccessResponse[Messages](200)
+      .withSuccessResponse[Events](200)
       .withErrorResponse[Problem](400)
       .withErrorResponse[Problem](401)
       .withErrorResponse[Problem](404)
-      
-
-
 
 }
-

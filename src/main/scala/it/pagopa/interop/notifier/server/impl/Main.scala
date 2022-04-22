@@ -16,27 +16,33 @@ import akka.persistence.typed.PersistenceId
 import akka.{actor => classic}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader}
+import it.pagopa.interop.commons.queue.{QueueConfiguration, QueueReader}
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
 import it.pagopa.interop.commons.utils.{CORSSupport, OpenapiUtils}
 import it.pagopa.interop.commons.vault.service.VaultService
 import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService}
 import it.pagopa.interop.notifier.api.impl.{
-  HealthApiMarshallerImpl,
-  HealthServiceApiImpl,
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
+  HealthApiMarshallerImpl,
+  HealthServiceApiImpl,
   problemOf
 }
-import it.pagopa.interop.notifier.api.{HealthApi, EventsApi}
+import it.pagopa.interop.notifier.api.{EventsApi, HealthApi}
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
 import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotificationEventIdBehavior}
 import it.pagopa.interop.notifier.server.Controller
+import it.pagopa.interop.notifier.service._
+import it.pagopa.interop.notifier.service.impl._
+import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
 import kamon.Kamon
 
+import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -44,7 +50,14 @@ trait VaultServiceDependency {
   val vaultService: VaultService = new DefaultVaultService with DefaultVaultClient.DefaultClientInstance
 }
 
-object Main extends App with CORSSupport with VaultServiceDependency {
+trait SQSReaderDependency {
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
+  val sqsReader   = QueueReader.get(ApplicationConfiguration.queueURL) {
+    jsonToPurpose orElse jsonToAgreement
+  }
+}
+
+object Main extends App with CORSSupport with VaultServiceDependency with SQSReaderDependency {
 
   val dependenciesLoaded: Try[(JWTReader, InteropTokenGenerator)] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset()
@@ -78,7 +91,6 @@ object Main extends App with CORSSupport with VaultServiceDependency {
       Behaviors.setup[Nothing] { context =>
         import akka.actor.typed.scaladsl.adapter._
         implicit val classicSystem: classic.ActorSystem = context.system.toClassic
-        implicit val executionContext: ExecutionContext = context.system.executionContext
 
         val cluster = Cluster(context.system)
 
@@ -93,8 +105,7 @@ object Main extends App with CORSSupport with VaultServiceDependency {
 
         val _ = sharding.init(organizationNotificationEntity)
 
-        val eventsApi: EventsApi =
-          new EventsApi(new EventsServiceApiImpl(), EventsApiMarshallerImpl, jwtReader.OAuth2JWTValidatorAsContexts)
+        val _ = AkkaManagement.get(classicSystem).start()
 
         val healthApi: HealthApi = new HealthApi(
           new HealthServiceApiImpl(),
@@ -102,7 +113,15 @@ object Main extends App with CORSSupport with VaultServiceDependency {
           SecurityDirectives.authenticateOAuth2("SecurityRealm", PassThroughAuthenticator)
         )
 
-        val _ = AkkaManagement.get(classicSystem).start()
+        val dynamoReader =
+          new DynamoServiceImpl(QueueConfiguration.queueAccountInfo, ApplicationConfiguration.dynamoTableName)
+
+        val eventsApi: EventsApi =
+          new EventsApi(
+            new EventsServiceApiImpl(dynamoReader),
+            EventsApiMarshallerImpl,
+            jwtReader.OAuth2JWTValidatorAsContexts
+          )
 
         val controller: Controller = new Controller(
           eventsApi,
@@ -117,7 +136,40 @@ object Main extends App with CORSSupport with VaultServiceDependency {
           })
         )
 
-        val _ = Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)
+        val catalogManagementService: CatalogManagementService =
+          CatalogManagementServiceImpl(
+            CatalogManagementInvoker(),
+            CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
+          )
+
+        val agreementManagementService: AgreementManagementService =
+          AgreementManagementServiceImpl(
+            AgreementManagementInvoker(),
+            AgreementManagementApi(ApplicationConfiguration.agreementManagementURL)
+          )
+
+        val purposeManagementService: PurposeManagementService =
+          PurposeManagementServiceImpl(
+            PurposeManagementInvoker(),
+            PurposeManagementApi(ApplicationConfiguration.purposeManagementURL)
+          )
+
+        val eventIdRetriever =
+          new EventIdRetriever(system = context.system, sharding = sharding, entity = organizationNotificationEntity)
+
+        val handler =
+          new QueueHandler(
+            interopTokenGenerator,
+            eventIdRetriever,
+            dynamoReader,
+            catalogManagementService,
+            purposeManagementService,
+            agreementManagementService
+          )
+        val _       = sqsReader.handle(handler.processMessage)
+
+        val _ =
+          Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)
 
         val listener = context.spawn(
           Behaviors.receive[ClusterEvent.MemberEvent]((ctx, event) => {

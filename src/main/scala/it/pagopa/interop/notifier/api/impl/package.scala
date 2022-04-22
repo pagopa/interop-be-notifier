@@ -10,21 +10,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
-  implicit val messageFormat: RootJsonFormat[Message]           = jsonFormat4(Message)
-  implicit val messagesFormat: RootJsonFormat[Messages]         = jsonFormat4(Messages)
-
-  // TODO implement this
-  implicit class EnrichedMessages(private val response: Messages) extends AnyVal {
-    def toModel: Messages = Messages(
-      limit = response.limit,
-      size = response.messages.size,
-      nextId = response.nextId,
-      messages = response.messages.map(messageToModel)
-    )
-
-    def messageToModel(msg: Message): Message =
-      Message(eventId = msg.eventId, eventType = msg.eventType, objectType = msg.objectType, objectId = msg.objectId)
-  }
+  implicit val eventFormat: RootJsonFormat[Event]               = jsonFormat4(Event)
+  implicit val eventsFormat: RootJsonFormat[Events]             = jsonFormat2(Events)
 
   final val serviceErrorCodePrefix: String = "015"
   final val defaultProblemType: String     = "about:blank"

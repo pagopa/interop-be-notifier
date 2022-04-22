@@ -1,4 +1,4 @@
-import PagopaVersions.commonsVersion
+import PagopaVersions._
 import Versions._
 import sbt._
 
@@ -37,7 +37,8 @@ object Dependencies {
 
   private[this] object awssdk {
     lazy val namespace = "software.amazon.awssdk"
-    lazy val s3        = namespace % "s3" % awsSdkVersion
+    lazy val s3        = namespace % "s3"       % awsSdkVersion
+    lazy val dynamodb  = namespace % "dynamodb" % awsDynamoDBVersion
   }
 
   lazy val Protobuf = "protobuf"
@@ -96,10 +97,25 @@ object Dependencies {
   }
 
   private[this] object pagopa {
-    lazy val namespace  = "it.pagopa"
-    lazy val commons    = namespace %% "interop-commons-utils" % commonsVersion
-    lazy val commonsJWT = namespace %% "interop-commons-jwt"   % commonsVersion
-    lazy val vault      = namespace %% "interop-commons-vault" % commonsVersion
+    lazy val namespace               = "it.pagopa"
+    lazy val catalogManagementClient =
+      namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
+    lazy val agreementManagementClient =
+      namespace %% "interop-be-agreement-management-client" % agreementManagementVersion
+    lazy val agreementManagementModels =
+      namespace %% "interop-be-agreement-management-models" % agreementManagementVersion
+    lazy val purposeManagementClient =
+      namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
+    lazy val purposeManagementModels =
+      namespace %% "interop-be-purpose-management-models" % purposeManagementVersion
+    lazy val commons      = namespace %% "interop-commons-utils"         % commonsVersion
+    lazy val commonsJWT   = namespace %% "interop-commons-jwt"           % commonsVersion
+    lazy val vault        = namespace %% "interop-commons-vault"         % commonsVersion
+    lazy val queueManager = namespace %% "interop-commons-queue-manager" % commonsVersion
+  }
+
+  private[this] object scanamo {
+    lazy val scanamo = "org.scanamo" %% "scanamo" % scanamoVersion
   }
 
   object Jars {
@@ -107,43 +123,50 @@ object Dependencies {
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
     lazy val `server`: Seq[ModuleID]  = Seq(
       // For making Java 12 happy
-      "javax.annotation"          % "javax.annotation-api" % "1.3.2" % "compile",
+      "javax.annotation"               % "javax.annotation-api" % "1.3.2" % "compile",
       //
-      akka.actorTyped             % Compile,
-      akka.clusterBootstrap       % Compile,
-      akka.clusterHttp            % Compile,
-      akka.clusterSharding        % Compile,
-      akka.clusterTools           % Compile,
-      akka.clusterTyped           % Compile,
-      akka.discovery              % Compile,
-      akka.discoveryKubernetesApi % Compile,
-      akka.http                   % Compile,
-      akka.httpJson               % Compile,
-      akka.management             % Compile,
-      akka.managementLogLevels    % Compile,
-      akka.persistence            % Compile,
-      akka.persistenceJdbc        % Compile,
-      akka.persistenceQuery       % Compile,
-      akka.projection             % Compile,
-      akka.projectionSlick        % Compile,
-      akka.s3Journal              % Compile,
-      akka.s3Snapshot             % Compile,
-      akka.slf4j                  % Compile,
-      akka.stream                 % Compile,
-      awssdk.s3                   % Compile,
-      cats.core                   % Compile,
-      kamon.bundle                % Compile,
-      kamon.prometheus            % Compile,
-      logback.classic             % Compile,
-      mustache.mustache           % Compile,
-      pagopa.commons              % Compile,
-      pagopa.commonsJWT           % Compile,
-      pagopa.vault                % Compile,
-      postgres.jdbc               % Compile,
-      scalaprotobuf.core          % Protobuf,
-      scalatest.core              % Test,
-      scalamock.core              % Test,
-      akka.testkit                % Test
+      akka.actorTyped                  % Compile,
+      akka.clusterBootstrap            % Compile,
+      akka.clusterHttp                 % Compile,
+      akka.clusterSharding             % Compile,
+      akka.clusterTools                % Compile,
+      akka.clusterTyped                % Compile,
+      akka.discovery                   % Compile,
+      akka.discoveryKubernetesApi      % Compile,
+      akka.http                        % Compile,
+      akka.httpJson                    % Compile,
+      akka.management                  % Compile,
+      akka.managementLogLevels         % Compile,
+      akka.persistence                 % Compile,
+      akka.persistenceJdbc             % Compile,
+      akka.persistenceQuery            % Compile,
+      akka.projection                  % Compile,
+      akka.projectionSlick             % Compile,
+      akka.s3Journal                   % Compile,
+      akka.s3Snapshot                  % Compile,
+      akka.slf4j                       % Compile,
+      akka.stream                      % Compile,
+      awssdk.s3                        % Compile,
+      cats.core                        % Compile,
+      kamon.bundle                     % Compile,
+      kamon.prometheus                 % Compile,
+      logback.classic                  % Compile,
+      mustache.mustache                % Compile,
+      pagopa.agreementManagementClient % Compile,
+      pagopa.agreementManagementModels % Compile,
+      pagopa.catalogManagementClient   % Compile,
+      pagopa.purposeManagementClient   % Compile,
+      pagopa.purposeManagementModels   % Compile,
+      pagopa.commons                   % Compile,
+      pagopa.commonsJWT                % Compile,
+      pagopa.vault                     % Compile,
+      pagopa.queueManager              % Compile,
+      postgres.jdbc                    % Compile,
+      scanamo.scanamo                  % Compile,
+      scalaprotobuf.core               % Protobuf,
+      scalatest.core                   % Test,
+      scalamock.core                   % Test,
+      akka.testkit                     % Test
     )
     lazy val client: Seq[ModuleID]    = Seq(
       akka.stream     % Compile,

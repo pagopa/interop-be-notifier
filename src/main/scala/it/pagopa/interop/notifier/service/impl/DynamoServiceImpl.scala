@@ -53,15 +53,14 @@ class DynamoServiceImpl(val config: QueueAccountInfo, val tableName: String)(imp
     logger.debug(s"Getting $limit events for organization $organizationId from $eventId")
     val operations = for {
       allLines <- messages
-        .filter("eventId" > eventId and "organizationId" === organizationId.toString)
-        .limit(limit)
+        .filter("eventId" > eventId and "organizationId" === organizationId)
         .scan()
     } yield allLines
 
     scanamo.exec(operations).map(x => x.sequence).flatMap {
       case Right(x)  =>
         logger.debug(s"${x.size} messages retrieved from Dynamo")
-        Future.successful(x.sortBy(_.eventId))
+        Future.successful(x.take(limit)) // TODO consider improving this using the limit upstream
       case Left(err) => Future.failed(DynamoReadingError(describe(err)))
     }
   }

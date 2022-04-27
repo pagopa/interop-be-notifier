@@ -48,29 +48,24 @@ sealed trait ApiReturnWithHeaders {
 }
 
 sealed case class ApiResponse[T](code: Int, content: T, headers: Map[String, String] = Map.empty)
-    extends ApiReturnWithHeaders
+  extends ApiReturnWithHeaders
 
-sealed case class ApiError[T](
-  code: Int,
-  message: String,
-  responseContent: Option[T],
-  cause: Throwable = null,
-  headers: Map[String, String] = Map.empty
-) extends Throwable(s"($code) $message.${responseContent.map(s => s" Content : $s").getOrElse("")}", cause)
+sealed case class ApiError[T](code: Int, message: String, responseContent: Option[T], cause: Throwable = null, headers: Map[String, String] = Map.empty)
+  extends Throwable(s"($code) $message.${responseContent.map(s => s" Content : $s").getOrElse("")}", cause)
     with ApiReturnWithHeaders
 
 sealed case class ApiMethod(value: String)
 
 object ApiMethods {
   val CONNECT = ApiMethod("CONNECT")
-  val DELETE  = ApiMethod("DELETE")
-  val GET     = ApiMethod("GET")
-  val HEAD    = ApiMethod("HEAD")
+  val DELETE = ApiMethod("DELETE")
+  val GET = ApiMethod("GET")
+  val HEAD = ApiMethod("HEAD")
   val OPTIONS = ApiMethod("OPTIONS")
-  val PATCH   = ApiMethod("PATCH")
-  val POST    = ApiMethod("POST")
-  val PUT     = ApiMethod("PUT")
-  val TRACE   = ApiMethod("TRACE")
+  val PATCH = ApiMethod("PATCH")
+  val POST = ApiMethod("POST")
+  val PUT = ApiMethod("PUT")
+  val TRACE = ApiMethod("TRACE")
 }
 
 /**
@@ -92,7 +87,7 @@ sealed case class BearerToken(token: String) extends Credentials
 sealed case class ApiKeyCredentials(key: ApiKeyValue, keyName: String, location: ApiKeyLocation) extends Credentials {
   override def asQueryParam: Option[(String, String)] = location match {
     case ApiKeyLocations.QUERY => Some((keyName, key.value))
-    case _                     => None
+    case _ => None
   }
 }
 
@@ -110,6 +105,7 @@ object ApiKeyLocations {
 
 }
 
+
 /**
  * Case class used to unapply numeric values only in pattern matching
  *
@@ -122,7 +118,7 @@ sealed case class NumericValue(value: String) {
 object NumericValue {
   def unapply(n: Any): Option[NumericValue] = n match {
     case (_: Int | _: Long | _: Float | _: Double | _: Boolean | _: Byte) => Some(NumericValue(String.valueOf(n)))
-    case _                                                                => None
+    case _ => None
   }
 }
 
@@ -137,6 +133,7 @@ object ArrayValues {
 
   def apply(values: Option[Seq[Any]]): ArrayValues = ArrayValues(values, CollectionFormats.CSV)
 }
+
 
 /**
  * Defines how arrays should be rendered in query strings.
@@ -181,24 +178,24 @@ object ParametersMap {
 
     def asFormattedParams: Map[String, Any] = m.flatMap(formattedParams)
 
-    private def urlEncode(v: Any) = String.valueOf(v) // double encoding removed
+    private def urlEncode(v: Any) = String.valueOf(v)   //double encoding removed
 
     private def formattedParams(tuple: (String, Any)): Seq[(String, Any)] = formattedParams(tuple._1, tuple._2)
 
     private def formattedParams(name: String, value: Any): Seq[(String, Any)] = value match {
       case arr: ArrayValues =>
         arr.format match {
-          case CollectionFormats.MULTI   => arr.values.flatMap(formattedParams(name, _))
+          case CollectionFormats.MULTI => arr.values.flatMap(formattedParams(name, _))
           case format: MergedArrayFormat => Seq((name, arr.values.mkString(format.separator)))
         }
-      case None             => Seq.empty
-      case Some(opt)        => formattedParams(name, opt)
-      case s: Seq[Any]      => formattedParams(name, ArrayValues(s))
-      case v: String        => Seq((name, urlEncode(v)))
-      case v: UUID          => formattedParams(name, v.toString)
-      case NumericValue(v)  => Seq((name, urlEncode(v)))
-      case f: File          => Seq((name, f))
-      case m: ApiModel      => Seq((name, m))
+      case None => Seq.empty
+      case Some(opt) => formattedParams(name, opt)
+      case s: Seq[Any] => formattedParams(name, ArrayValues(s))
+      case v: String => Seq((name, urlEncode(v)))
+      case v: UUID => formattedParams(name, v.toString)
+      case NumericValue(v) => Seq((name, urlEncode(v)))
+      case f: File => Seq((name, f))
+      case m: ApiModel => Seq((name, m))
     }
   }
 

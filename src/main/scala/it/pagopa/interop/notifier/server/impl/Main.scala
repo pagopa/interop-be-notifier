@@ -51,7 +51,7 @@ trait VaultServiceDependency {
 }
 
 trait SQSReaderDependency {
-  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(ApplicationConfiguration.threadPoolSize))
   val sqsReader   = QueueReader.get(ApplicationConfiguration.queueURL) {
     jsonToPurpose orElse jsonToAgreement
   }

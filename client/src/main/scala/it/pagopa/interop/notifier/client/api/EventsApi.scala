@@ -23,7 +23,7 @@ object EventsApi {
 }
 
 class EventsApi(baseUrl: String) {
-
+  
   /**
    * Retrieves the list of events sent to the caller
    * 
@@ -41,15 +41,9 @@ class EventsApi(baseUrl: String) {
    * @param xForwardedFor 
    * @param limit the number of events returned by this response
    */
-  def getEventsFromId(
-    lastEventId: Long,
-    xCorrelationId: Option[String] = None,
-    xForwardedFor: Option[String] = None,
-    limit: Option[Int] = None
-  )(implicit bearerToken: BearerToken): ApiRequest[Events] =
+  def getEventsFromId(lastEventId: Long, xCorrelationId: Option[String] = None, xForwardedFor: Option[String] = None, limit: Option[Int] = None)(implicit bearerToken: BearerToken): ApiRequest[Events] =
     ApiRequest[Events](ApiMethods.GET, baseUrl, "/events", "application/json")
-      .withCredentials(bearerToken)
-      .withQueryParam("lastEventId", lastEventId)
+      .withCredentials(bearerToken).withQueryParam("lastEventId", lastEventId)
       .withQueryParam("limit", limit)
       .withHeaderParam("X-Correlation-Id", xCorrelationId)
       .withHeaderParam("X-Forwarded-For", xForwardedFor)
@@ -57,5 +51,9 @@ class EventsApi(baseUrl: String) {
       .withErrorResponse[Problem](400)
       .withErrorResponse[Problem](401)
       .withErrorResponse[Problem](404)
+      
+
+
 
 }
+

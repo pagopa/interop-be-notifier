@@ -1,10 +1,10 @@
 package it.pagopa.interop.notifier.service.impl
 
 import it.pagopa.interop.commons.jwt.model.RSA
+import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
-import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER}
 import it.pagopa.interop.notifier.service.converters.{
   AgreementEventsConverter,

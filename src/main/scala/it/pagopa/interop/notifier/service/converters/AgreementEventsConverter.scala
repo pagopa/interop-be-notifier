@@ -21,17 +21,17 @@ object AgreementEventsConverter {
     case VerifiedAttributeUpdated(a) =>
       Right(
         AgreementEventPayload(
-          agreementId = a.producerId.toString,
+          agreementId = a.id.toString,
           eventType = UPDATED,
           objectType = "AGREEMENT_VERIFIED_ATTRIBUTE"
         )
       )
-    case AgreementAdded(a)       => Right(AgreementEventPayload(agreementId = a.producerId.toString, eventType = ADDED))
-    case AgreementActivated(a)   =>
-      Right(AgreementEventPayload(agreementId = a.producerId.toString, eventType = ACTIVATED))
-    case AgreementSuspended(a)   =>
-      Right(AgreementEventPayload(agreementId = a.producerId.toString, eventType = SUSPENDED))
-    case AgreementDeactivated(a) =>
-      Right(AgreementEventPayload(agreementId = a.producerId.toString, eventType = DEACTIVATED))
+    case AgreementAdded(a)           => Right(AgreementEventPayload(agreementId = a.id.toString, eventType = ADDED))
+    case AgreementActivated(a)       =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = ACTIVATED))
+    case AgreementSuspended(a)       =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = SUSPENDED))
+    case AgreementDeactivated(a)     =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = DEACTIVATED))
   }
 }

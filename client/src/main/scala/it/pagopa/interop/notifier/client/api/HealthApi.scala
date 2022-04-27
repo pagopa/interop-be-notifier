@@ -22,7 +22,7 @@ object HealthApi {
 }
 
 class HealthApi(baseUrl: String) {
-
+  
   /**
    * Return ok
    * 
@@ -34,7 +34,10 @@ class HealthApi(baseUrl: String) {
    */
   def getStatus()(implicit bearerToken: BearerToken): ApiRequest[Problem] =
     ApiRequest[Problem](ApiMethods.GET, baseUrl, "/status", "application/json")
-      .withCredentials(bearerToken)
-      .withSuccessResponse[Problem](200)
+      .withCredentials(bearerToken).withSuccessResponse[Problem](200)
+      
+
+
 
 }
+

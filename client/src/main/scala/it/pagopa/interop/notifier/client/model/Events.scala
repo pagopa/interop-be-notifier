@@ -13,4 +13,11 @@ package it.pagopa.interop.notifier.client.model
 
 import it.pagopa.interop.notifier.client.invoker.ApiModel
 
-case class Events(lastEventId: Long, events: Seq[Event]) extends ApiModel
+
+case class Events (
+  lastEventId: Long,
+  events: Seq[Event]
+) extends ApiModel
+
+
+

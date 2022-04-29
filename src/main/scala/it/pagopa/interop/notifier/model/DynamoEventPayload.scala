@@ -25,5 +25,5 @@ case class PurposeEventPayload(purposeId: String, eventType: String, objectType:
 }
 case class AgreementEventPayload(agreementId: String, eventType: String, objectType: String = "AGREEMENT")
     extends DynamoEventPayload {
-  override def objectId: Map[String, String] = Map("agreementId" -> agreementId)
+  override val objectId: Map[String, String] = Map("agreementId" -> agreementId)
 }

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class EventIdRetriever(
+final class EventIdRetriever(
   system: ActorSystem[_],
   sharding: ClusterSharding,
   entity: Entity[Command, ShardingEnvelope[Command]]

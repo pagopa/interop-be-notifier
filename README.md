@@ -1,1 +1,1 @@
-# PDND Interoperability - Notifier service
+# Interoperability - Notifier service

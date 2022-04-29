@@ -5,7 +5,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object ApplicationConfiguration {
-  lazy val config: Config            = ConfigFactory.load()
+  val config: Config                 = ConfigFactory.load()
   val serverPort: Int                = config.getInt("notifier.port")
   val interopAudience: Set[String]   = config.getStringList("notifier.jwt.audience").asScala.toSet
   val rsaPrivatePath: String         = config.getString("notifier.rsa-private-path")

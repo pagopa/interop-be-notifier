@@ -16,7 +16,7 @@ final case class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker,
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  override def getEServiceById(contexts: Seq[(String, String)])(eServiceId: UUID): Future[EService] = {
+  private[this] def getEServiceById(contexts: Seq[(String, String)])(eServiceId: UUID): Future[EService] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getEService(xCorrelationId = correlationId, eServiceId.toString, xForwardedFor = ip)(

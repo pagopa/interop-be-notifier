@@ -9,7 +9,7 @@ object NotifierErrors {
       extends ComponentError("0002", s"Organization $organizationId not found")
 
   final case class DynamoReadingError(message: String)
-      extends ComponentError("0003", "Error while reading data from Dynamo")
+      extends ComponentError("0003", s"Error while reading data from Dynamo -> $message")
   final case class MessageRecipientNotFound(message: String)
       extends ComponentError("0004", s"Error while parsing message content -> $message")
 

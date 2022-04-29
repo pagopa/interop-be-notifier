@@ -50,7 +50,7 @@ object DynamoMessage {
   }
 }
 
-final object DynamoMessageFormatters {
+object DynamoMessageFormatters {
   implicit val formatPayload: DynamoFormat[DynamoEventPayload]  = deriveDynamoFormat
   implicit val formatDynamoMessage: DynamoFormat[DynamoMessage] = deriveDynamoFormat
 }

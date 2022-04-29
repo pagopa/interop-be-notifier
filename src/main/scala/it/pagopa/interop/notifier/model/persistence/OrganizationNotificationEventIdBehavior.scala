@@ -26,24 +26,11 @@ object OrganizationNotificationEventIdBehavior {
           .persist(EventIdAdded(organizationId.toString, nextId))
           .thenRun((_: State) => replyTo ! Some(PersistentOrganizationEvent(organizationId, nextId)))
 
-      case GetOrganizationNotificationEventId(organizationId, replyTo) =>
-        state.identifiers.get(organizationId.toString) match {
-          case Some(currentId) =>
-            replyTo ! Some(PersistentOrganizationEvent(organizationId, currentId))
-            Effect.none[Event, State]
-          case None            => commandError(replyTo)
-        }
-
       case Idle =>
         shard ! ClusterSharding.Passivate(context.self)
         context.log.info(s"Passivate shard: ${shard.path.name}")
         Effect.none[Event, State]
     }
-  }
-
-  private def commandError[T](replyTo: ActorRef[Option[T]]): Effect[Event, State] = {
-    replyTo ! None
-    Effect.none[Event, State]
   }
 
   val eventHandler: (State, Event) => State =

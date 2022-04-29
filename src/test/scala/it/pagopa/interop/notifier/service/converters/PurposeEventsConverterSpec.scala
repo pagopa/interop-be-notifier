@@ -23,7 +23,7 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       // when
       val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(p)
       // then
-      conversion shouldBe Right(PurposeEventPayload(id.toString, CREATED))
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.CREATED.toString))
     }
 
     "Convert purpose waited for approval to event payload" in {
@@ -35,7 +35,7 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       // when
       val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(p)
       // then
-      conversion shouldBe Right(PurposeEventPayload(id.toString, WAITING_FOR_APPROVAL))
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.WAITING_FOR_APPROVAL.toString))
     }
   }
 

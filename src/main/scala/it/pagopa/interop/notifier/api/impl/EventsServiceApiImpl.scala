@@ -39,7 +39,7 @@ class EventsServiceApiImpl(dynamoService: DynamoService)(implicit ec: ExecutionC
     val result: Future[Events] = for {
       organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
       dynamoMessages <- dynamoService.get(limit)(organizationId, lastEventId)
-      lastId   = if (dynamoMessages.size > 0) dynamoMessages.last.eventId else 0
+      lastId   = Option.when(dynamoMessages.size > 0)(dynamoMessages.last.eventId)
       messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
     } yield messages
 

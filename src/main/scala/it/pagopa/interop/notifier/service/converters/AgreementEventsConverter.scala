@@ -9,11 +9,11 @@ import scala.concurrent.Future
 
 object AgreementEventsConverter {
 
-  def getRecipient: PartialFunction[ProjectableEvent, Future[UUID]] = {
-    case e: Event => Future.successful(getEventRecipient(e))
+  def getRecipient: PartialFunction[ProjectableEvent, Future[UUID]] = { case e: Event =>
+    Future.successful(getEventRecipient(e))
   }
-  
-  def getEventRecipient(event: Event): UUID = event match {
+
+  private[this] def getEventRecipient(event: Event): UUID = event match {
     case VerifiedAttributeUpdated(a) => a.producerId
     case AgreementAdded(a)           => a.producerId
     case AgreementActivated(a)       => a.producerId
@@ -22,20 +22,26 @@ object AgreementEventsConverter {
   }
 
   def asDynamoPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = {
+    case e: Event => getEventPayload(e)
+  }
+
+  private[this] def getEventPayload(event: Event): Either[ComponentError, DynamoEventPayload] = event match {
     case VerifiedAttributeUpdated(a) =>
       Right(
         AgreementEventPayload(
           agreementId = a.id.toString,
-          eventType = UPDATED,
+          eventType = EventType.UPDATED.toString,
           objectType = "AGREEMENT_VERIFIED_ATTRIBUTE"
         )
       )
-    case AgreementAdded(a)           => Right(AgreementEventPayload(agreementId = a.id.toString, eventType = ADDED))
+    case AgreementAdded(a)           =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ADDED.toString))
     case AgreementActivated(a)       =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = ACTIVATED))
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ACTIVATED.toString))
     case AgreementSuspended(a)       =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = SUSPENDED))
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.SUSPENDED.toString))
     case AgreementDeactivated(a)     =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = DEACTIVATED))
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.DEACTIVATED.toString))
   }
+
 }

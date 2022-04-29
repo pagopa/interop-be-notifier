@@ -4,7 +4,7 @@ import it.pagopa.interop.agreementmanagement.model.agreement.{Active, Persistent
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementActivated
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.service.converters.{ACTIVATED, CREATED}
+import it.pagopa.interop.notifier.service.converters.EventType.{ACTIVATED, CREATED}
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeCreated
 import it.pagopa.interop.purposemanagement.model.purpose.PersistentPurpose
 import org.scalatest.matchers.should.Matchers
@@ -57,7 +57,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         eventJournalPersistenceId = eventJournalPersistenceId,
         eventJournalSequenceNumber = eventJournalSequenceNumber,
         eventTimestamp = eventTimestamp,
-        payload = PurposeEventPayload(id.toString, CREATED)
+        payload = PurposeEventPayload(id.toString, CREATED.toString)
       )
       conversion shouldBe Right(expected)
     }
@@ -104,7 +104,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         eventJournalPersistenceId = eventJournalPersistenceId,
         eventJournalSequenceNumber = eventJournalSequenceNumber,
         eventTimestamp = eventTimestamp,
-        payload = AgreementEventPayload(id.toString, ACTIVATED)
+        payload = AgreementEventPayload(id.toString, ACTIVATED.toString)
       )
       conversion shouldBe Right(expected)
     }

@@ -9,15 +9,6 @@ import java.util.UUID
 import scala.concurrent.Future
 
 package object converters {
-  val ADDED                = "ADDED"
-  val CREATED              = "CREATED"
-  val DELETED              = "DELETED"
-  val UPDATED              = "UPDATED"
-  val SUSPENDED            = "SUSPENDED"
-  val DEACTIVATED          = "DEACTIVATED"
-  val ACTIVATED            = "ACTIVATED"
-  val ARCHIVED             = "ARCHIVED"
-  val WAITING_FOR_APPROVAL = "WAITING_FOR_APPROVAL"
 
   def notFoundRecipient: PartialFunction[ProjectableEvent, Future[UUID]] = { case x =>
     Future.failed(MessageRecipientNotFound(x.getClass.getName))
@@ -25,5 +16,10 @@ package object converters {
 
   def notFoundPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = { case x =>
     Left(DynamoConverterNotFound(x.getClass.getName))
+  }
+
+  object EventType extends Enumeration {
+    type EventType = Value
+    val ADDED, CREATED, DELETED, UPDATED, SUSPENDED, DEACTIVATED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL = Value
   }
 }

@@ -13,7 +13,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val eventFormat: RootJsonFormat[Event]               = jsonFormat4(Event)
   implicit val eventsFormat: RootJsonFormat[Events]             = jsonFormat2(Events)
 
-  final val serviceErrorCodePrefix: String = "015"
+  final val serviceErrorCodePrefix: String = "017"
   final val defaultProblemType: String     = "about:blank"
 
   def problemOf(httpError: StatusCode, error: ComponentError, defaultMessage: String = "Unknown error"): Problem =

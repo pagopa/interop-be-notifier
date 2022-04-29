@@ -51,12 +51,7 @@ class DynamoServiceImpl(val config: QueueAccountInfo, val tableName: String)(imp
 
   override def get(limit: Int)(organizationId: UUID, eventId: Long): Future[List[DynamoMessage]] = {
     logger.debug(s"Getting $limit events for organization $organizationId from $eventId")
-    val operations = for {
-      allLines <- messages
-        .filter("eventId" > eventId and "organizationId" === organizationId)
-        .scan()
-    } yield allLines
-
+    val operations = messages.query("organizationId" === organizationId and "eventId" > eventId)
     scanamo.exec(operations).map(x => x.sequence).flatMap {
       case Right(x)  =>
         logger.debug(s"${x.size} messages retrieved from Dynamo")

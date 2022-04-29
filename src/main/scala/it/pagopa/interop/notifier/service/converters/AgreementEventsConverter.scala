@@ -10,11 +10,15 @@ import scala.concurrent.Future
 object AgreementEventsConverter {
 
   def getRecipient: PartialFunction[ProjectableEvent, Future[UUID]] = {
-    case VerifiedAttributeUpdated(a) => Future.successful(a.producerId)
-    case AgreementAdded(a)           => Future.successful(a.producerId)
-    case AgreementActivated(a)       => Future.successful(a.producerId)
-    case AgreementSuspended(a)       => Future.successful(a.producerId)
-    case AgreementDeactivated(a)     => Future.successful(a.producerId)
+    case e: Event => Future.successful(getEventRecipient(e))
+  }
+  
+  def getEventRecipient(event: Event): UUID = event match {
+    case VerifiedAttributeUpdated(a) => a.producerId
+    case AgreementAdded(a)           => a.producerId
+    case AgreementActivated(a)       => a.producerId
+    case AgreementSuspended(a)       => a.producerId
+    case AgreementDeactivated(a)     => a.producerId
   }
 
   def asDynamoPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = {

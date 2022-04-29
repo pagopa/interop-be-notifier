@@ -21,7 +21,7 @@ sealed trait DynamoEventPayload {
 
 case class PurposeEventPayload(purposeId: String, eventType: String, objectType: String = "PURPOSE")
     extends DynamoEventPayload {
-  override def objectId: Map[String, String] = Map("purposeId" -> purposeId)
+  override val objectId: Map[String, String] = Map("purposeId" -> purposeId)
 }
 case class AgreementEventPayload(agreementId: String, eventType: String, objectType: String = "AGREEMENT")
     extends DynamoEventPayload {

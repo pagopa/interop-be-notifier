@@ -53,7 +53,7 @@ class QueueHandler(
           secondsDuration = jwtConfig.durationInSeconds
         )
         .toFuture
-      m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken)
+      m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
       organizationId <- getRecipientId(m2mContexts)(msg.payload)
       _ = logger.debug("Organization id retrieved for message {} -> {}", msg.messageUUID, organizationId)
       nextEvent <- idRetriever.getNextEventIdForOrganization(organizationId)

@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+import "scalapb/scalapb.proto";
+
+option (scalapb.options) = {
+  package_name: "it.pagopa.interop.notifier.model.persistence.serializer.v1"
+  no_default_values_in_constructor : true
+};
+
+message EventIdAddedV1 {
+  required string organizationId = 1;
+  required int64 id = 2;
+}

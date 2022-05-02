@@ -1,1 +1,1 @@
-# interop-be-notifier
+# Interoperability - Notifier service

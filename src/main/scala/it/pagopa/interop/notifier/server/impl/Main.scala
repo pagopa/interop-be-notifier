@@ -105,8 +105,6 @@ object Main extends App with CORSSupport with VaultServiceDependency with SQSRea
 
         val _ = sharding.init(organizationNotificationEntity)
 
-        val _ = AkkaManagement.get(classicSystem).start()
-
         val healthApi: HealthApi = new HealthApi(
           new HealthServiceApiImpl(),
           HealthApiMarshallerImpl,
@@ -180,7 +178,7 @@ object Main extends App with CORSSupport with VaultServiceDependency with SQSRea
         )
 
         Cluster(context.system).subscriptions ! Subscribe(listener, classOf[ClusterEvent.MemberEvent])
-
+        val _ = AkkaManagement.get(classicSystem).start()
         ClusterBootstrap.get(classicSystem).start()
         Behaviors.empty
       },

@@ -1,7 +1,5 @@
 package it.pagopa.interop.notifier.service.impl
 
-import it.pagopa.interop.commons.jwt.model.RSA
-import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
@@ -46,13 +44,11 @@ class QueueHandler(
     for {
       m2mToken <- interopTokenGenerator
         .generateInternalToken(
-          jwtAlgorithmType = RSA,
           subject = jwtConfig.subject,
           audience = jwtConfig.audience.toList,
           tokenIssuer = jwtConfig.issuer,
           secondsDuration = jwtConfig.durationInSeconds
         )
-        .toFuture
       m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
       organizationId <- getRecipientId(m2mContexts)(msg.payload)
       _ = logger.debug("Organization id retrieved for message {} -> {}", msg.messageUUID, organizationId)

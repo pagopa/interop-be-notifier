@@ -18,14 +18,15 @@ import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
 import it.pagopa.interop.commons.jwt._
+import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
-import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader}
 import it.pagopa.interop.commons.queue.{QueueConfiguration, QueueReader}
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
 import it.pagopa.interop.commons.utils.{CORSSupport, OpenapiUtils}
-import it.pagopa.interop.commons.vault.service.VaultService
-import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService}
+import it.pagopa.interop.commons.vault.VaultClientConfiguration
+import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService, VaultTransitServiceImpl}
+import it.pagopa.interop.commons.vault.service.{VaultService, VaultTransitService}
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
@@ -59,22 +60,16 @@ trait SQSReaderDependency {
 
 object Main extends App with CORSSupport with VaultServiceDependency with SQSReaderDependency {
 
-  val dependenciesLoaded: Try[(JWTReader, InteropTokenGenerator)] = for {
+  val dependenciesLoaded: Try[JWTReader] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset()
-    jwtReader             = new DefaultJWTReader with PublicKeysHolder {
+    jwtReader = new DefaultJWTReader with PublicKeysHolder {
       var publicKeyset: Map[KID, SerializedKey]                                        = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
         getClaimsVerifier(audience = ApplicationConfiguration.interopAudience)
     }
-    interopTokenGenerator = new DefaultInteropTokenGenerator with PrivateKeysHolder {
-      override val RSAPrivateKeyset: Map[KID, SerializedKey] =
-        vaultService.readBase64EncodedData(ApplicationConfiguration.rsaPrivatePath)
-      override val ECPrivateKeyset: Map[KID, SerializedKey]  =
-        Map.empty
-    }
-  } yield (jwtReader, interopTokenGenerator)
+  } yield jwtReader
 
-  val (jwtReader, interopTokenGenerator) =
+  val jwtReader =
     dependenciesLoaded.get // THIS IS THE END OF THE WORLD. Exceptions are welcomed here.
 
   Kamon.init()
@@ -154,6 +149,16 @@ object Main extends App with CORSSupport with VaultServiceDependency with SQSRea
 
         val eventIdRetriever =
           new EventIdRetriever(system = context.system, sharding = sharding, entity = organizationNotificationEntity)
+
+        val vaultService: VaultTransitService = new VaultTransitServiceImpl(VaultClientConfiguration.vaultConfig)
+
+        val interopTokenGenerator = new DefaultInteropTokenGenerator(
+          vaultService,
+          new PrivateKeysKidHolder {
+            override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
+            override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers
+          }
+        )
 
         val handler =
           new QueueHandler(

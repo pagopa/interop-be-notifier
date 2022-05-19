@@ -5,7 +5,8 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.notifier.service.{PurposeManagementApi, PurposeManagementInvoker, PurposeManagementService}
 import it.pagopa.interop.purposemanagement.client.invoker.BearerToken
 import it.pagopa.interop.purposemanagement.client.model.Purpose
-import org.slf4j.{Logger, LoggerFactory}
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -13,15 +14,14 @@ final case class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker,
   ec: ExecutionContext
 ) extends PurposeManagementService {
 
-  implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getPurpose(contexts: Seq[(String, String)])(id: String): Future[Purpose] = {
-    for {
-      id                               <- id.toFutureUUID
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getPurpose(xCorrelationId = correlationId, id, xForwardedFor = ip)(BearerToken(bearerToken))
-      result <- invoker.invoke(request, s"Retrieving purpose $id")
-    } yield result
+  override def getPurpose(id: String)(implicit contexts: Seq[(String, String)]): Future[Purpose] = for {
+    id                               <- id.toFutureUUID
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getPurpose(xCorrelationId = correlationId, id, xForwardedFor = ip)(BearerToken(bearerToken))
+    result <- invoker.invoke(request, s"Retrieving purpose $id")
+  } yield result
 
-  }
 }

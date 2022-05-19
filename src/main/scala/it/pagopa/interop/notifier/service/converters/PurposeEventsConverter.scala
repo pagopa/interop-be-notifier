@@ -13,37 +13,34 @@ import scala.concurrent.{ExecutionContext, Future}
 object PurposeEventsConverter {
   def getRecipient(
     catalogManagementService: CatalogManagementService,
-    purposeManagementService: PurposeManagementService,
-    contexts: Seq[(String, String)]
-  )(implicit ec: ExecutionContext): PartialFunction[ProjectableEvent, Future[UUID]] = { case e: Event =>
-    getEventRecipient(catalogManagementService, purposeManagementService, contexts, e)
+    purposeManagementService: PurposeManagementService
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): PartialFunction[ProjectableEvent, Future[UUID]] = {
+    case e: Event => getEventRecipient(catalogManagementService, purposeManagementService, e)
   }
 
   private[this] def getEventRecipient(
     catalogManagementService: CatalogManagementService,
     purposeManagementService: PurposeManagementService,
-    contexts: Seq[(String, String)],
     event: Event
-  )(implicit ec: ExecutionContext): Future[UUID] = {
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[UUID] = {
     def producer(purposeId: String): Future[UUID] = for {
-      p        <- purposeManagementService.getPurpose(contexts)(purposeId)
-      producer <- catalogManagementService.getEServiceProducerByEServiceId(contexts)(p.eserviceId)
+      p        <- purposeManagementService.getPurpose(purposeId)
+      producer <- catalogManagementService.getEServiceProducerByEServiceId(p.eserviceId)
     } yield producer
 
     event match {
-      case PurposeCreated(purpose)                  =>
-        catalogManagementService.getEServiceProducerByEServiceId(contexts)(purpose.eserviceId)
-      case PurposeUpdated(purpose)                  =>
-        catalogManagementService.getEServiceProducerByEServiceId(contexts)(purpose.eserviceId)
+      case PurposeCreated(purpose) =>
+        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
+      case PurposeUpdated(purpose) => catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
       case PurposeVersionCreated(purposeId, _)      => producer(purposeId)
       case PurposeVersionActivated(purpose)         =>
-        catalogManagementService.getEServiceProducerByEServiceId(contexts)(purpose.eserviceId)
+        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
       case PurposeVersionSuspended(purpose)         =>
-        catalogManagementService.getEServiceProducerByEServiceId(contexts)(purpose.eserviceId)
+        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
       case PurposeVersionWaitedForApproval(purpose) =>
-        catalogManagementService.getEServiceProducerByEServiceId(contexts)(purpose.eserviceId)
+        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
       case PurposeVersionArchived(purpose)          =>
-        catalogManagementService.getEServiceProducerByEServiceId(contexts)(purpose.eserviceId)
+        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
       case PurposeVersionUpdated(purposeId, _)      => producer(purposeId)
       case PurposeVersionDeleted(purposeId, _)      => producer(purposeId)
       case PurposeDeleted(purposeId)                => producer(purposeId)

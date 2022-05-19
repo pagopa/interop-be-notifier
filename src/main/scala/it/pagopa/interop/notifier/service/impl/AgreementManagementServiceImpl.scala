@@ -6,7 +6,8 @@ import it.pagopa.interop.agreementmanagement.client.model._
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.notifier.service.{AgreementManagementInvoker, AgreementManagementService}
-import org.slf4j.{Logger, LoggerFactory}
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -14,23 +15,23 @@ final case class AgreementManagementServiceImpl(invoker: AgreementManagementInvo
   ec: ExecutionContext
 ) extends AgreementManagementService {
 
-  implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getAgreementById(contexts: Seq[(String, String)])(agreementId: String): Future[Agreement] = {
+  override def getAgreementById(agreementId: String)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getAgreement(correlationId, agreementId, ip)(BearerToken(bearerToken))
       result <- invoker.invoke(request, s"Retrieving agreement by id = $agreementId")
     } yield result
-  }
 
-  override def getAgreements(contexts: Seq[(String, String)])(
+  override def getAgreements(
     producerId: Option[String] = None,
     consumerId: Option[String] = None,
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
     state: Option[AgreementState] = None
-  ): Future[Seq[Agreement]] = {
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] = {
 
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture

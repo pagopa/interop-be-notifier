@@ -15,7 +15,7 @@ import it.pagopa.interop.notifier.service.{
   DynamoService,
   PurposeManagementService
 }
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.Logger
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +30,7 @@ class QueueHandler(
 )(implicit ec: ExecutionContext) {
 
   lazy val jwtConfig: JWTInternalTokenConfig = JWTConfiguration.jwtInternalTokenConfig
-  private val logger                         = LoggerFactory.getLogger(this.getClass)
+  private val logger                         = Logger(this.getClass)
 
   /*
    * it does:
@@ -51,7 +51,7 @@ class QueueHandler(
     m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
     organizationId <- getRecipientId(msg.payload)(m2mContexts)
     _ = logger.debug("Organization id retrieved for message {} -> {}", msg.messageUUID, organizationId)
-    nextEvent <- idRetriever.getNextEventIdForOrganization(organizationId)
+    nextEvent <- idRetriever.getNextEventIdForOrganization(organizationId)(m2mContexts)
     _ = logger.debug("Next event id for organization {} -> {}", nextEvent.organizationId, nextEvent.eventId)
     _ = dynamoService.put(organizationId, nextEvent.eventId, msg)
   } yield ()

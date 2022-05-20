@@ -98,7 +98,7 @@ object Main extends App with CORSSupport with VaultServiceDependency with SQSRea
         val organizationNotificationEntity: Entity[Command, ShardingEnvelope[Command]] =
           Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
-        val _ = sharding.init(organizationNotificationEntity)
+        sharding.init(organizationNotificationEntity)
 
         val healthApi: HealthApi = new HealthApi(
           new HealthServiceApiImpl(),
@@ -160,19 +160,18 @@ object Main extends App with CORSSupport with VaultServiceDependency with SQSRea
           }
         )
 
-        val handler =
-          new QueueHandler(
-            interopTokenGenerator,
-            eventIdRetriever,
-            dynamoReader,
-            catalogManagementService,
-            purposeManagementService,
-            agreementManagementService
-          )
-        val _       = sqsReader.handle(handler.processMessage)
+        val handler = new QueueHandler(
+          interopTokenGenerator,
+          eventIdRetriever,
+          dynamoReader,
+          catalogManagementService,
+          purposeManagementService,
+          agreementManagementService
+        )
 
-        val _ =
-          Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)
+        sqsReader.handle(handler.processMessage)
+
+        Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)
 
         val listener = context.spawn(
           Behaviors.receive[ClusterEvent.MemberEvent]((ctx, event) => {

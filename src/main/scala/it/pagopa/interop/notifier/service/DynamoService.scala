@@ -27,6 +27,8 @@ trait DynamoService {
     * @param eventId
     * @return
     */
-  def get(limit: Int)(organizationId: UUID, eventId: Long): Future[List[DynamoMessage]]
+  def get(limit: Int)(organizationId: UUID, eventId: Long)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[List[DynamoMessage]]
 
 }

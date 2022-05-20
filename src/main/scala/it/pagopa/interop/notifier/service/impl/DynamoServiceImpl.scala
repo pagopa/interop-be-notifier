@@ -14,17 +14,19 @@ import org.scanamo.DynamoReadError.describe
 import org.scanamo._
 import org.scanamo.ops.ScanamoOpsA
 import org.scanamo.syntax._
-import org.slf4j.LoggerFactory
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 class DynamoServiceImpl(val config: QueueAccountInfo, val tableName: String)(implicit ec: ExecutionContext)
     extends DynamoService {
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   private val awsCredentials: AwsBasicCredentials =
     AwsBasicCredentials.create(config.accessKeyId, config.secretAccessKey)
@@ -49,7 +51,9 @@ class DynamoServiceImpl(val config: QueueAccountInfo, val tableName: String)(imp
     } yield ()
   }
 
-  override def get(limit: Int)(organizationId: UUID, eventId: Long): Future[List[DynamoMessage]] = {
+  override def get(
+    limit: Int
+  )(organizationId: UUID, eventId: Long)(implicit contexts: Seq[(String, String)]): Future[List[DynamoMessage]] = {
     logger.debug(s"Getting $limit events for organization $organizationId from $eventId")
     val operations = messages.query("organizationId" === organizationId and "eventId" > eventId)
     scanamo.exec(operations).map(x => x.sequence).flatMap {

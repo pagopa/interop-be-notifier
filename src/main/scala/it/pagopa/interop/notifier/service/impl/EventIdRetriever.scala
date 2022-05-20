@@ -11,7 +11,8 @@ import it.pagopa.interop.notifier.model.persistence.{
   PersistentOrganizationEvent,
   UpdateOrganizationNotificationEventId
 }
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,7 +23,8 @@ final class EventIdRetriever(
   entity: Entity[Command, ShardingEnvelope[Command]]
 )(implicit ec: ExecutionContext) {
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   private val settings: ClusterShardingSettings = entity.settings match {
     case None    => ClusterShardingSettings(system)
@@ -34,22 +36,19 @@ final class EventIdRetriever(
   /** Code: 201, Message: Attribute created, DataType: Attribute
     * Code: 400, Message: Bad Request, DataType: Problem
     */
-  def getNextEventIdForOrganization(organizationId: UUID): Future[PersistentOrganizationEvent] = {
+  def getNextEventIdForOrganization(
+    organizationId: UUID
+  )(implicit contexts: Seq[(String, String)]): Future[PersistentOrganizationEvent] = {
     logger.info("Getting next id for organization {}", organizationId)
 
     val commander: EntityRef[Command] =
       sharding.entityRefFor(OrganizationNotificationEventIdBehavior.TypeKey, getShard(organizationId.toString))
 
-    val evt = for {
-      eventData <- commander.ask(ref => UpdateOrganizationNotificationEventId(organizationId, ref))
-    } yield eventData
+    commander.ask(ref => UpdateOrganizationNotificationEventId(organizationId, ref)).flatMap {
+      case Some(res) => Future.successful(res)
+      case None      => Future.failed(OrganizationNotFound(organizationId.toString))
+    }
 
-    evt.flatMap(x =>
-      x match {
-        case Some(res) => Future.successful(res)
-        case None      => Future.failed[PersistentOrganizationEvent](OrganizationNotFound(organizationId.toString))
-      }
-    )
   }
 
 }

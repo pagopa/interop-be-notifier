@@ -40,31 +40,30 @@ class QueueHandler(
    *  - gets the next event id for the corresponding recipient
    *  - saves the event on dynamo
    */
-  def processMessage(msg: Message): Future[Unit] = {
-    for {
-      m2mToken <- interopTokenGenerator
-        .generateInternalToken(
-          subject = jwtConfig.subject,
-          audience = jwtConfig.audience.toList,
-          tokenIssuer = jwtConfig.issuer,
-          secondsDuration = jwtConfig.durationInSeconds
-        )
-      m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
-      organizationId <- getRecipientId(m2mContexts)(msg.payload)
-      _ = logger.debug("Organization id retrieved for message {} -> {}", msg.messageUUID, organizationId)
-      nextEvent <- idRetriever.getNextEventIdForOrganization(organizationId)
-      _ = logger.debug("Next event id for organization {} -> {}", nextEvent.organizationId, nextEvent.eventId)
-      _ = dynamoService.put(organizationId, nextEvent.eventId, msg)
-    } yield ()
-  }
+  def processMessage(msg: Message): Future[Unit] = for {
+    m2mToken <- interopTokenGenerator
+      .generateInternalToken(
+        subject = jwtConfig.subject,
+        audience = jwtConfig.audience.toList,
+        tokenIssuer = jwtConfig.issuer,
+        secondsDuration = jwtConfig.durationInSeconds
+      )
+    m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
+    organizationId <- getRecipientId(msg.payload)(m2mContexts)
+    _ = logger.debug("Organization id retrieved for message {} -> {}", msg.messageUUID, organizationId)
+    nextEvent <- idRetriever.getNextEventIdForOrganization(organizationId)
+    _ = logger.debug("Next event id for organization {} -> {}", nextEvent.organizationId, nextEvent.eventId)
+    _ = dynamoService.put(organizationId, nextEvent.eventId, msg)
+  } yield ()
 
   // gets the identifier of the recipient organization id
-  private[this] def getRecipientId(contexts: Seq[(String, String)])(message: ProjectableEvent): Future[UUID] = {
+  private[this] def getRecipientId(
+    message: ProjectableEvent
+  )(implicit contexts: Seq[(String, String)]): Future[UUID] = {
     val composedGetters =
       PurposeEventsConverter.getRecipient(
         catalogManagementService,
-        purposeManagementService,
-        contexts
+        purposeManagementService
       ) orElse AgreementEventsConverter.getRecipient orElse notFoundRecipient
 
     composedGetters(message)

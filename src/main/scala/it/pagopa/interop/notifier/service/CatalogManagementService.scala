@@ -4,5 +4,5 @@ import java.util.UUID
 import scala.concurrent.Future
 
 trait CatalogManagementService {
-  def getEServiceProducerByEServiceId(contexts: Seq[(String, String)])(eServiceId: UUID): Future[UUID]
+  def getEServiceProducerByEServiceId(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[UUID]
 }

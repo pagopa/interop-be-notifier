@@ -6,13 +6,13 @@ import scala.concurrent.Future
 
 trait AgreementManagementService {
 
-  def getAgreementById(contexts: Seq[(String, String)])(agreementId: String): Future[Agreement]
+  def getAgreementById(agreementId: String)(implicit contexts: Seq[(String, String)]): Future[Agreement]
 
-  def getAgreements(contexts: Seq[(String, String)])(
+  def getAgreements(
     producerId: Option[String] = None,
     consumerId: Option[String] = None,
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
     state: Option[AgreementState] = None
-  ): Future[Seq[Agreement]]
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]]
 }

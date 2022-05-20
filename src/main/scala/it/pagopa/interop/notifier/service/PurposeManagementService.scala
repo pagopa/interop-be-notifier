@@ -6,6 +6,5 @@ import scala.concurrent.Future
 
 trait PurposeManagementService {
 
-  def getPurpose(contexts: Seq[(String, String)])(id: String): Future[Purpose]
-
+  def getPurpose(id: String)(implicit contexts: Seq[(String, String)]): Future[Purpose]
 }

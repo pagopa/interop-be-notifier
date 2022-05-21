@@ -26,10 +26,7 @@ final class EventIdRetriever(
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  private val settings: ClusterShardingSettings = entity.settings match {
-    case None    => ClusterShardingSettings(system)
-    case Some(s) => s
-  }
+  private val settings: ClusterShardingSettings = entity.settings.getOrElse(ClusterShardingSettings(system))
 
   @inline private def getShard(id: String): String = (math.abs(id.hashCode) % settings.numberOfShards).toString
 

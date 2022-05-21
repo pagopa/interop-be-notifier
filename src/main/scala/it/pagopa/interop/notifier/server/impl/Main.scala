@@ -1,192 +1,107 @@
 package it.pagopa.interop.notifier.server.impl
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorSystem, Behavior}
+import akka.actor.typed.ActorSystem
 import akka.cluster.ClusterEvent
-import akka.cluster.sharding.typed.ShardingEnvelope
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext}
 import akka.cluster.typed.{Cluster, Subscribe}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.complete
-import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import akka.persistence.typed.PersistenceId
-import akka.{actor => classic}
-import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
-import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
-import it.pagopa.interop.commons.jwt._
-import it.pagopa.interop.commons.jwt.service.JWTReader
-import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
-import it.pagopa.interop.commons.queue.{QueueConfiguration, QueueReader}
-import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
-import it.pagopa.interop.commons.utils.{CORSSupport, OpenapiUtils}
-import it.pagopa.interop.commons.vault.VaultClientConfiguration
-import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService, VaultTransitServiceImpl}
-import it.pagopa.interop.commons.vault.service.{VaultService, VaultTransitService}
-import it.pagopa.interop.notifier.api.impl.{
-  EventsApiMarshallerImpl,
-  EventsServiceApiImpl,
-  HealthApiMarshallerImpl,
-  HealthServiceApiImpl,
-  problemOf
-}
-import it.pagopa.interop.notifier.api.{EventsApi, HealthApi}
+
+import it.pagopa.interop.commons.utils.CORSSupport
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
-import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotificationEventIdBehavior}
 import it.pagopa.interop.notifier.server.Controller
-import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
-import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
 import kamon.Kamon
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
-import scala.util.Try
+import buildinfo.BuildInfo
+import com.typesafe.scalalogging.Logger
+import it.pagopa.interop.commons.logging.renderBuildInfo
+import cats.syntax.all._
+import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.Future
+import scala.util.{Success, Failure}
+import akka.cluster.sharding.typed.scaladsl.ClusterSharding
+import it.pagopa.interop.commons.queue.QueueReader
 
-trait VaultServiceDependency {
-  val vaultService: VaultService = new DefaultVaultService with DefaultVaultClient.DefaultClientInstance
-}
+object Main extends App with CORSSupport with Dependencies {
 
-trait SQSReaderDependency {
-  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(ApplicationConfiguration.threadPoolSize))
-  val sqsReader   = QueueReader.get(ApplicationConfiguration.queueURL) {
-    jsonToPurpose orElse jsonToAgreement
-  }
-}
+  val logger: Logger = Logger(this.getClass())
 
-object Main extends App with CORSSupport with VaultServiceDependency with SQSReaderDependency {
+  val system: ActorSystem[Nothing] = ActorSystem[Nothing](
+    Behaviors.setup[Nothing] { context =>
+      implicit val actorSystem: ActorSystem[Nothing]          = context.system
+      implicit val executionContext: ExecutionContextExecutor = actorSystem.executionContext
 
-  val dependenciesLoaded: Try[JWTReader] = for {
-    keyset <- JWTConfiguration.jwtReader.loadKeyset()
-    jwtReader = new DefaultJWTReader with PublicKeysHolder {
-      var publicKeyset: Map[KID, SerializedKey]                                        = keyset
-      override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
-        getClaimsVerifier(audience = ApplicationConfiguration.interopAudience)
-    }
-  } yield jwtReader
+      Kamon.init()
+      AkkaManagement.get(actorSystem.classicSystem).start()
 
-  val jwtReader =
-    dependenciesLoaded.get // THIS IS THE END OF THE WORLD. Exceptions are welcomed here.
+      val sharding: ClusterSharding = ClusterSharding(actorSystem)
+      sharding.init(organizationNotificationEntity)
 
-  Kamon.init()
+      val cluster = Cluster(actorSystem)
+      ClusterBootstrap.get(actorSystem.classicSystem).start()
 
-  lazy val notificationBehaviorFactory: EntityContext[Command] => Behavior[Command] = { entityContext =>
-    OrganizationNotificationEventIdBehavior(
-      entityContext.shard,
-      PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId)
-    )
-  }
+      val listener = context.spawn(
+        Behaviors.receive[ClusterEvent.MemberEvent]((ctx, event) => {
+          ctx.log.info("MemberEvent: {}", event)
+          Behaviors.same
+        }),
+        "listener"
+      )
 
-  locally {
-    val _ = ActorSystem[Nothing](
-      Behaviors.setup[Nothing] { context =>
-        import akka.actor.typed.scaladsl.adapter._
-        implicit val classicSystem: classic.ActorSystem = context.system.toClassic
+      cluster.subscriptions ! Subscribe(listener, classOf[ClusterEvent.MemberEvent])
 
-        val cluster = Cluster(context.system)
+      logger.info(renderBuildInfo(BuildInfo))
+      logger.info(s"Started cluster at ${cluster.selfMember.address}")
 
-        context.log.info(
-          "Started [" + context.system + "], cluster.selfAddress = " + cluster.selfMember.address + ", build information = " + buildinfo.BuildInfo.toString + ")"
-        )
+      val handler: QueueHandler = new QueueHandler(
+        interopTokenGenerator,
+        eventIdRetriever(sharding),
+        dynamoReader(),
+        catalogManagementService(),
+        purposeManagementService(),
+        agreementManagementService()
+      )
 
-        val sharding: ClusterSharding = ClusterSharding(context.system)
+      val readerExecutionContext: ExecutionContextExecutor =
+        ExecutionContext.fromExecutor(Executors.newFixedThreadPool(ApplicationConfiguration.threadPoolSize))
 
-        val organizationNotificationEntity: Entity[Command, ShardingEnvelope[Command]] =
-          Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
+      val queueReader: QueueReader = sqsReader()(readerExecutionContext)
 
-        sharding.init(organizationNotificationEntity)
+      val serverBinding: Future[Http.ServerBinding] = for {
+        jwtReader <- getJwtReader()
+        dynamo     = dynamoReader()
+        events     = eventsApi(dynamo, jwtReader)
+        controller = new Controller(events, healthApi, validationExceptionToRoute.some)(actorSystem.classicSystem)
+        binding <- Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)
+      } yield binding
 
-        val healthApi: HealthApi = new HealthApi(
-          new HealthServiceApiImpl(),
-          HealthApiMarshallerImpl,
-          SecurityDirectives.authenticateOAuth2("SecurityRealm", PassThroughAuthenticator)
-        )
+      val queueHandling: Future[Unit] = queueReader.handle(handler.processMessage)
 
-        val dynamoReader =
-          new DynamoServiceImpl(QueueConfiguration.queueAccountInfo, ApplicationConfiguration.dynamoTableName)
+      serverBinding.onComplete {
+        case Success(b) =>
+          logger.info(s"Started server at ${b.localAddress.getHostString()}:${b.localAddress.getPort()}")
+        case Failure(e) =>
+          actorSystem.terminate()
+          logger.error("Startup error: ", e)
+      }
 
-        val eventsApi: EventsApi =
-          new EventsApi(
-            new EventsServiceApiImpl(dynamoReader),
-            EventsApiMarshallerImpl,
-            jwtReader.OAuth2JWTValidatorAsContexts
-          )
+      queueHandling.onComplete {
+        case Success(_) =>
+          logger.error(s"SQSQueue handling somehow finished, and this should not have happened.")
+        case Failure(e) =>
+          actorSystem.terminate()
+          logger.error("Startup error: ", e)
+      }
 
-        val controller: Controller = new Controller(
-          eventsApi,
-          healthApi,
-          validationExceptionToRoute = Some(report => {
-            val error =
-              problemOf(
-                StatusCodes.BadRequest,
-                ValidationRequestError(OpenapiUtils.errorFromRequestValidationReport(report))
-              )
-            complete(error.status, error)(HealthApiMarshallerImpl.toEntityMarshallerProblem)
-          })
-        )
+      Behaviors.empty
+    },
+    BuildInfo.name
+  )
 
-        val catalogManagementService: CatalogManagementService =
-          CatalogManagementServiceImpl(
-            CatalogManagementInvoker(),
-            CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
-          )
+  system.whenTerminated.onComplete { case _ => Kamon.stop() }(scala.concurrent.ExecutionContext.global)
 
-        val agreementManagementService: AgreementManagementService =
-          AgreementManagementServiceImpl(
-            AgreementManagementInvoker(),
-            AgreementManagementApi(ApplicationConfiguration.agreementManagementURL)
-          )
-
-        val purposeManagementService: PurposeManagementService =
-          PurposeManagementServiceImpl(
-            PurposeManagementInvoker(),
-            PurposeManagementApi(ApplicationConfiguration.purposeManagementURL)
-          )
-
-        val eventIdRetriever =
-          new EventIdRetriever(system = context.system, sharding = sharding, entity = organizationNotificationEntity)
-
-        val vaultService: VaultTransitService = new VaultTransitServiceImpl(VaultClientConfiguration.vaultConfig)
-
-        val interopTokenGenerator = new DefaultInteropTokenGenerator(
-          vaultService,
-          new PrivateKeysKidHolder {
-            override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
-            override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers
-          }
-        )
-
-        val handler = new QueueHandler(
-          interopTokenGenerator,
-          eventIdRetriever,
-          dynamoReader,
-          catalogManagementService,
-          purposeManagementService,
-          agreementManagementService
-        )
-
-        sqsReader.handle(handler.processMessage)
-
-        Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)
-
-        val listener = context.spawn(
-          Behaviors.receive[ClusterEvent.MemberEvent]((ctx, event) => {
-            ctx.log.info("MemberEvent: {}", event)
-            Behaviors.same
-          }),
-          "listener"
-        )
-
-        Cluster(context.system).subscriptions ! Subscribe(listener, classOf[ClusterEvent.MemberEvent])
-        val _ = AkkaManagement.get(classicSystem).start()
-        ClusterBootstrap.get(classicSystem).start()
-        Behaviors.empty
-      },
-      "interop-be-notifier"
-    )
-  }
 }

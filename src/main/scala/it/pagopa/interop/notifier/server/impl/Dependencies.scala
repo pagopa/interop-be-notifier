@@ -44,8 +44,6 @@ trait Dependencies {
 
   val vaultService: VaultService = new DefaultVaultService with DefaultVaultClient.DefaultClientInstance
 
-  // implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(ApplicationConfiguration.threadPoolSize))
-
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
     jsonToPurpose orElse jsonToAgreement
   }

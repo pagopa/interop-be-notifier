@@ -14,14 +14,13 @@ import it.pagopa.interop.notifier.api.EventsApiService
 import it.pagopa.interop.notifier.error.NotifierErrors.InternalServerError
 import it.pagopa.interop.notifier.model.{DynamoMessage, Event, Events, Problem}
 import it.pagopa.interop.notifier.service.DynamoService
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 class EventsServiceApiImpl(dynamoService: DynamoService)(implicit ec: ExecutionContext) extends EventsApiService {
 
-  private val logger = Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
+  private val logger = Logger.takingImplicit[ContextFieldsToLog](this.getClass())
 
   /**
     * Code: 200, Message: Messages, DataType: Messages

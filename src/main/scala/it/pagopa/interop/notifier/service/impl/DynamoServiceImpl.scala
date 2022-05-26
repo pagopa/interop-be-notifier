@@ -2,7 +2,8 @@ package it.pagopa.interop.notifier.service.impl
 
 import cats.free.Free
 import cats.implicits._
-import it.pagopa.interop.commons.queue.QueueAccountInfo
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.notifier.error.NotifierErrors.DynamoReadingError
@@ -14,31 +15,20 @@ import org.scanamo.DynamoReadError.describe
 import org.scanamo._
 import org.scanamo.ops.ScanamoOpsA
 import org.scanamo.syntax._
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
-class DynamoServiceImpl(val config: QueueAccountInfo, val tableName: String)(implicit ec: ExecutionContext)
-    extends DynamoService {
+class DynamoServiceImpl(val tableName: String)(implicit ec: ExecutionContext) extends DynamoService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  private val awsCredentials: AwsBasicCredentials =
-    AwsBasicCredentials.create(config.accessKeyId, config.secretAccessKey)
+  private val dynamoClient: DynamoDbAsyncClient = DynamoDbAsyncClient.create()
 
-  private val dynamoClient: DynamoDbAsyncClient = DynamoDbAsyncClient
-    .builder()
-    .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
-    .region(config.region)
-    .build()
-
-  val scanamo  = ScanamoAsync(dynamoClient)
-  val messages = Table[DynamoMessage](tableName)
+  val scanamo: ScanamoAsync          = ScanamoAsync(dynamoClient)
+  val messages: Table[DynamoMessage] = Table[DynamoMessage](tableName)
 
   override def put(organizationId: UUID, eventId: Long, message: Message): Future[Unit] = {
     def operation(msg: DynamoMessage): Free[ScanamoOpsA, Unit] = for {

@@ -37,8 +37,8 @@ object Dependencies {
 
   private[this] object awssdk {
     lazy val namespace = "software.amazon.awssdk"
-    lazy val s3        = namespace % "s3"       % awsSdkVersion
-    lazy val dynamodb  = namespace % "dynamodb" % awsDynamoDBVersion
+    lazy val s3        = namespace % "s3"  % awsSdkVersion
+    lazy val sts       = namespace % "sts" % awsSdkVersion // Required to use IAM role on container
   }
 
   lazy val Protobuf = "protobuf"
@@ -147,6 +147,7 @@ object Dependencies {
       akka.slf4j                       % Compile,
       akka.stream                      % Compile,
       awssdk.s3                        % Compile,
+      awssdk.sts                       % Compile,
       cats.core                        % Compile,
       kamon.bundle                     % Compile,
       kamon.prometheus                 % Compile,

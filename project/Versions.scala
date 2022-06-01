@@ -3,7 +3,6 @@ object Versions {
   lazy val akkaManagementVersion       = "1.0.10"
   lazy val akkaVersion                 = "2.6.17"
   lazy val awsSdkVersion               = "2.17.164"
-  lazy val awsDynamoDBVersion          = "2.17.157"
   lazy val cassandraPersistenceVersion = "1.0.5"
   lazy val catsVersion                 = "2.7.0"
   lazy val httpJson4sVersion           = "1.38.2"

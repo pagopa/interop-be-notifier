@@ -5,19 +5,23 @@ import akka.cluster.sharding.typed.ShardingEnvelope
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.persistence.typed.PersistenceId
+import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
-import it.pagopa.interop.commons.queue.{QueueConfiguration, QueueReader}
+import it.pagopa.interop.commons.queue.QueueReader
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
 import it.pagopa.interop.commons.utils.OpenapiUtils
+import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
 import it.pagopa.interop.commons.vault.VaultClientConfiguration
+import it.pagopa.interop.commons.vault.service.VaultService
 import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService, VaultTransitServiceImpl}
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
@@ -33,12 +37,7 @@ import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import it.pagopa.interop.commons.utils.TypeConversions._
-import com.atlassian.oai.validator.report.ValidationReport
-import akka.http.scaladsl.server.Route
-import it.pagopa.interop.commons.vault.service.VaultService
+import scala.concurrent.{ExecutionContext, Future}
 
 trait Dependencies {
 
@@ -70,7 +69,7 @@ trait Dependencies {
     Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
   def dynamoReader()(implicit ec: ExecutionContext): DynamoServiceImpl =
-    new DynamoServiceImpl(QueueConfiguration.queueAccountInfo, ApplicationConfiguration.dynamoTableName)
+    new DynamoServiceImpl(ApplicationConfiguration.dynamoTableName)
 
   def eventsApi(dynamoReader: DynamoService, jwtReader: JWTReader)(implicit ec: ExecutionContext): EventsApi =
     new EventsApi(

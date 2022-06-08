@@ -72,7 +72,7 @@ object Main extends App with CORSSupport with Dependencies {
       val queueReader: QueueReader = sqsReader()(readerExecutionContext)
 
       val serverBinding: Future[Http.ServerBinding] = for {
-        jwtReader <- getJwtReader
+        jwtReader <- getJwtReader()
         dynamo     = dynamoReader()
         events     = eventsApi(dynamo, jwtReader)
         controller = new Controller(events, healthApi, validationExceptionToRoute.some)(actorSystem.classicSystem)

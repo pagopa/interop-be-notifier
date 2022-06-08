@@ -43,7 +43,7 @@ trait Dependencies {
     jsonToPurpose orElse jsonToAgreement
   }
 
-  def getJwtReader: Future[JWTReader] = JWTConfiguration.jwtReader
+  def getJwtReader(): Future[JWTReader] = JWTConfiguration.jwtReader
     .loadKeyset()
     .map(keyset =>
       new DefaultJWTReader with PublicKeysHolder {

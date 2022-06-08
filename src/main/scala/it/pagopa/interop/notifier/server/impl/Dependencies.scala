@@ -16,13 +16,11 @@ import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
 import it.pagopa.interop.commons.queue.QueueReader
+import it.pagopa.interop.commons.signer.service.impl.KMSSignerServiceImpl
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.OpenapiUtils
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
-import it.pagopa.interop.commons.vault.VaultClientConfiguration
-import it.pagopa.interop.commons.vault.service.VaultService
-import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService, VaultTransitServiceImpl}
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
@@ -40,8 +38,6 @@ import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.
 import scala.concurrent.{ExecutionContext, Future}
 
 trait Dependencies {
-
-  val vaultService: VaultService = new DefaultVaultService with DefaultVaultClient.DefaultClientInstance
 
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
     jsonToPurpose orElse jsonToAgreement
@@ -116,7 +112,7 @@ trait Dependencies {
 
   def interopTokenGenerator(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]) =
     new DefaultInteropTokenGenerator(
-      new VaultTransitServiceImpl(VaultClientConfiguration.vaultConfig)(actorSystem.classicSystem),
+      KMSSignerServiceImpl()(actorSystem.classicSystem),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers

@@ -28,7 +28,7 @@ import it.pagopa.interop.commons.queue.QueueReader
 
 object Main extends App with CORSSupport with Dependencies {
 
-  val logger: Logger = Logger(this.getClass())
+  val logger: Logger = Logger(this.getClass)
 
   val system: ActorSystem[Nothing] = ActorSystem[Nothing](
     Behaviors.setup[Nothing] { context =>
@@ -83,7 +83,7 @@ object Main extends App with CORSSupport with Dependencies {
 
       serverBinding.onComplete {
         case Success(b) =>
-          logger.info(s"Started server at ${b.localAddress.getHostString()}:${b.localAddress.getPort()}")
+          logger.info(s"Started server at ${b.localAddress.getHostString}:${b.localAddress.getPort}")
         case Failure(e) =>
           actorSystem.terminate()
           logger.error("Startup error: ", e)
@@ -102,6 +102,6 @@ object Main extends App with CORSSupport with Dependencies {
     BuildInfo.name
   )
 
-  system.whenTerminated.onComplete { case _ => Kamon.stop() }(scala.concurrent.ExecutionContext.global)
+  system.whenTerminated.onComplete(_ => Kamon.stop())(scala.concurrent.ExecutionContext.global)
 
 }

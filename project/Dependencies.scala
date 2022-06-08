@@ -110,7 +110,7 @@ object Dependencies {
       namespace %% "interop-be-purpose-management-models" % purposeManagementVersion
     lazy val commons      = namespace %% "interop-commons-utils"         % commonsVersion
     lazy val commonsJWT   = namespace %% "interop-commons-jwt"           % commonsVersion
-    lazy val vault        = namespace %% "interop-commons-vault"         % commonsVersion
+    lazy val vault        = namespace %% "interop-commons-signer"        % commonsVersion
     lazy val queueManager = namespace %% "interop-commons-queue-manager" % commonsVersion
   }
 

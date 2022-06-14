@@ -112,7 +112,7 @@ trait Dependencies {
 
   def interopTokenGenerator(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]) =
     new DefaultInteropTokenGenerator(
-      KMSSignerServiceImpl()(actorSystem.classicSystem),
+      KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(actorSystem.classicSystem, ec),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers

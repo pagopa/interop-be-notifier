@@ -12,6 +12,8 @@ object ApplicationConfiguration {
   val queueURL: String               = config.getString("notifier.queue.url")
   val threadPoolSize: Int            = config.getInt("notifier.queue.thread-pool-size")
 
+  val signerMaxConnections: Int = config.getInt("notifier.signer-max-connections")
+
   val interopAudience: Set[String] =
     config.getString("notifier.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 

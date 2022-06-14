@@ -62,8 +62,7 @@ object Main extends App with CORSSupport with Dependencies {
         eventIdRetriever(sharding),
         dynamoReader(),
         catalogManagementService(),
-        purposeManagementService(),
-        agreementManagementService()
+        purposeManagementService()
       )
 
       val readerExecutionContext: ExecutionContextExecutor =

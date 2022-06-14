@@ -92,15 +92,6 @@ trait Dependencies {
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
     )
 
-  def agreementManagementService()(implicit
-    ec: ExecutionContext,
-    actorSystem: ActorSystem[_]
-  ): AgreementManagementService =
-    AgreementManagementServiceImpl(
-      AgreementManagementInvoker()(actorSystem.classicSystem),
-      AgreementManagementApi(ApplicationConfiguration.agreementManagementURL)
-    )
-
   def purposeManagementService()(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): PurposeManagementService =
     PurposeManagementServiceImpl(
       PurposeManagementInvoker()(actorSystem.classicSystem),

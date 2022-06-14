@@ -4,21 +4,10 @@ import it.pagopa.interop._
 
 package object service {
 
-  type AgreementManagementInvoker = agreementmanagement.client.invoker.ApiInvoker
-  type AgreementManagementApi     = agreementmanagement.client.api.AgreementApi
-  type PurposeManagementInvoker   = purposemanagement.client.invoker.ApiInvoker
-  type PurposeManagementApi       = purposemanagement.client.api.PurposeApi
-  type CatalogManagementInvoker   = catalogmanagement.client.invoker.ApiInvoker
-  type CatalogManagementApi       = catalogmanagement.client.api.EServiceApi
-
-  object AgreementManagementInvoker {
-    def apply()(implicit actorSystem: ActorSystem): AgreementManagementInvoker =
-      agreementmanagement.client.invoker.ApiInvoker(agreementmanagement.client.api.EnumsSerializers.all)
-  }
-
-  object AgreementManagementApi {
-    def apply(baseUrl: String): AgreementManagementApi = agreementmanagement.client.api.AgreementApi(baseUrl)
-  }
+  type PurposeManagementInvoker = purposemanagement.client.invoker.ApiInvoker
+  type PurposeManagementApi     = purposemanagement.client.api.PurposeApi
+  type CatalogManagementInvoker = catalogmanagement.client.invoker.ApiInvoker
+  type CatalogManagementApi     = catalogmanagement.client.api.EServiceApi
 
   object PurposeManagementInvoker {
     def apply()(implicit actorSystem: ActorSystem): PurposeManagementInvoker =

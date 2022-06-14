@@ -100,8 +100,6 @@ object Dependencies {
     lazy val namespace               = "it.pagopa"
     lazy val catalogManagementClient =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
-    lazy val agreementManagementClient =
-      namespace %% "interop-be-agreement-management-client" % agreementManagementVersion
     lazy val agreementManagementModels =
       namespace %% "interop-be-agreement-management-models" % agreementManagementVersion
     lazy val purposeManagementClient =
@@ -153,7 +151,6 @@ object Dependencies {
       kamon.prometheus                 % Compile,
       logback.classic                  % Compile,
       mustache.mustache                % Compile,
-      pagopa.agreementManagementClient % Compile,
       pagopa.agreementManagementModels % Compile,
       pagopa.catalogManagementClient   % Compile,
       pagopa.purposeManagementClient   % Compile,

@@ -9,12 +9,7 @@ import it.pagopa.interop.notifier.service.converters.{
   PurposeEventsConverter,
   notFoundRecipient
 }
-import it.pagopa.interop.notifier.service.{
-  AgreementManagementService,
-  CatalogManagementService,
-  DynamoService,
-  PurposeManagementService
-}
+import it.pagopa.interop.notifier.service.{CatalogManagementService, DynamoService, PurposeManagementService}
 import com.typesafe.scalalogging.Logger
 
 import java.util.UUID
@@ -25,8 +20,7 @@ class QueueHandler(
   val idRetriever: EventIdRetriever,
   val dynamoService: DynamoService,
   val catalogManagementService: CatalogManagementService,
-  val purposeManagementService: PurposeManagementService,
-  val agreementManagementService: AgreementManagementService
+  val purposeManagementService: PurposeManagementService
 )(implicit ec: ExecutionContext) {
 
   lazy val jwtConfig: JWTInternalTokenConfig = JWTConfiguration.jwtInternalTokenConfig

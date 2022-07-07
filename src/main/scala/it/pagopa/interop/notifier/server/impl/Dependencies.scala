@@ -102,9 +102,9 @@ trait Dependencies {
   def eventIdRetriever(sharding: ClusterSharding)(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]) =
     new EventIdRetriever(actorSystem, sharding, entity = organizationNotificationEntity)
 
-  def interopTokenGenerator(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]) =
+  def interopTokenGenerator(implicit ec: ExecutionContext) =
     new DefaultInteropTokenGenerator(
-      KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(actorSystem.classicSystem, ec),
+      KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(ec),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers

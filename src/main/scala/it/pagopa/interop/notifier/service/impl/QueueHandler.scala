@@ -47,8 +47,9 @@ class QueueHandler(
     _ = logger.debug("Organization id retrieved for message {} -> {}", msg.messageUUID, organizationId)
     nextEvent <- idRetriever.getNextEventIdForOrganization(organizationId)(m2mContexts)
     _ = logger.debug("Next event id for organization {} -> {}", nextEvent.organizationId, nextEvent.eventId)
-    _ = dynamoService.put(organizationId, nextEvent.eventId, msg)
-  } yield ()
+    result <- dynamoService.put(organizationId, nextEvent.eventId, msg)
+    _ = logger.debug("Message {} was successfully written to dynamodb", msg.messageUUID.toString)
+  } yield result
 
   // gets the identifier of the recipient organization id
   private[this] def getRecipientId(

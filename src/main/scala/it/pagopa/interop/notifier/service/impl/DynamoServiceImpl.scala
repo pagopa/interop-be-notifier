@@ -1,6 +1,5 @@
 package it.pagopa.interop.notifier.service.impl
 
-import cats.free.Free
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -13,7 +12,6 @@ import it.pagopa.interop.notifier.model.DynamoMessageFormatters.formatDynamoMess
 import it.pagopa.interop.notifier.service.DynamoService
 import org.scanamo.DynamoReadError.describe
 import org.scanamo._
-import org.scanamo.ops.ScanamoOpsA
 import org.scanamo.syntax._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
@@ -30,16 +28,11 @@ class DynamoServiceImpl(val tableName: String)(implicit ec: ExecutionContext) ex
   val scanamo: ScanamoAsync          = ScanamoAsync(dynamoClient)
   val messages: Table[DynamoMessage] = Table[DynamoMessage](tableName)
 
-  override def put(organizationId: UUID, eventId: Long, message: Message): Future[Unit] = {
-    def operation(msg: DynamoMessage): Free[ScanamoOpsA, Unit] = for {
-      _ <- messages.put(msg)
-    } yield ()
-
+  override def put(organizationId: UUID, eventId: Long, message: Message): Future[Unit] =
     for {
-      msg <- toDynamoMessage(organizationId.toString, eventId, message).toFuture
-      _   <- scanamo.exec { operation(msg) }
-    } yield ()
-  }
+      msg    <- toDynamoMessage(organizationId.toString, eventId, message).toFuture
+      result <- scanamo.exec(messages.put(msg))
+    } yield result
 
   override def get(
     limit: Int

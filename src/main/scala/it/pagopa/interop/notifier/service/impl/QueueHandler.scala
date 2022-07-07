@@ -44,11 +44,11 @@ class QueueHandler(
       )
     m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
     organizationId <- getRecipientId(msg.payload)(m2mContexts)
-    _ = logger.debug("Organization id retrieved for message {} -> {}", msg.messageUUID, organizationId)
+    _ = logger.debug(s"Organization id retrieved for message  ${msg.messageUUID} -> $organizationId")
     nextEvent <- idRetriever.getNextEventIdForOrganization(organizationId)(m2mContexts)
-    _ = logger.debug("Next event id for organization {} -> {}", nextEvent.organizationId, nextEvent.eventId)
+    _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
     result <- dynamoService.put(organizationId, nextEvent.eventId, msg)
-    _ = logger.debug("Message {} was successfully written to dynamodb", msg.messageUUID.toString)
+    _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
   } yield result
 
   // gets the identifier of the recipient organization id

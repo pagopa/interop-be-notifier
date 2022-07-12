@@ -25,6 +25,7 @@ import scala.concurrent.Future
 import scala.util.{Success, Failure}
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import it.pagopa.interop.commons.queue.QueueReader
+import akka.actor.typed.DispatcherSelector
 
 object Main extends App with CORSSupport with Dependencies {
 
@@ -34,6 +35,9 @@ object Main extends App with CORSSupport with Dependencies {
     Behaviors.setup[Nothing] { context =>
       implicit val actorSystem: ActorSystem[Nothing]          = context.system
       implicit val executionContext: ExecutionContextExecutor = actorSystem.executionContext
+
+      val selector: DispatcherSelector         = DispatcherSelector.fromConfig("futures-dispatcher")
+      val blockingEc: ExecutionContextExecutor = actorSystem.dispatchers.lookup(selector)
 
       Kamon.init()
       AkkaManagement.get(actorSystem.classicSystem).start()
@@ -58,11 +62,11 @@ object Main extends App with CORSSupport with Dependencies {
       logger.info(s"Started cluster at ${cluster.selfMember.address}")
 
       val handler: QueueHandler = new QueueHandler(
-        interopTokenGenerator,
+        interopTokenGenerator(blockingEc),
         eventIdRetriever(sharding),
         dynamoReader(),
-        catalogManagementService(),
-        purposeManagementService()
+        catalogManagementService(blockingEc),
+        purposeManagementService(blockingEc)
       )
 
       val readerExecutionContext: ExecutionContextExecutor =

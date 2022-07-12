@@ -16,7 +16,7 @@ import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
 import it.pagopa.interop.commons.queue.QueueReader
-import it.pagopa.interop.commons.signer.service.impl.KMSSignerServiceImpl
+import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.OpenapiUtils
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -35,7 +35,7 @@ import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
 
@@ -87,24 +87,28 @@ trait Dependencies {
     loggingEnabled = false
   )
 
-  def catalogManagementService()(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): CatalogManagementService =
+  def catalogManagementService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): CatalogManagementService =
     CatalogManagementServiceImpl(
-      CatalogManagementInvoker()(actorSystem.classicSystem),
+      CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
     )
 
-  def purposeManagementService()(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): PurposeManagementService =
+  def purposeManagementService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): PurposeManagementService =
     PurposeManagementServiceImpl(
-      PurposeManagementInvoker()(actorSystem.classicSystem),
+      PurposeManagementInvoker(blockingEc)(actorSystem.classicSystem),
       PurposeManagementApi(ApplicationConfiguration.purposeManagementURL)
     )
 
   def eventIdRetriever(sharding: ClusterSharding)(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]) =
     new EventIdRetriever(actorSystem, sharding, entity = organizationNotificationEntity)
 
-  def interopTokenGenerator(implicit ec: ExecutionContext) =
+  def interopTokenGenerator(blockingEc: ExecutionContextExecutor)(implicit ex: ExecutionContext) =
     new DefaultInteropTokenGenerator(
-      KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(ec),
+      new KMSSignerService(blockingEc),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers

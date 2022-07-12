@@ -1,6 +1,7 @@
 package it.pagopa.interop.notifier
 import akka.actor.ActorSystem
 import it.pagopa.interop._
+import scala.concurrent.ExecutionContextExecutor
 
 package object service {
 
@@ -10,8 +11,8 @@ package object service {
   type CatalogManagementApi     = catalogmanagement.client.api.EServiceApi
 
   object PurposeManagementInvoker {
-    def apply()(implicit actorSystem: ActorSystem): PurposeManagementInvoker =
-      purposemanagement.client.invoker.ApiInvoker(purposemanagement.client.api.EnumsSerializers.all)
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): PurposeManagementInvoker =
+      purposemanagement.client.invoker.ApiInvoker(purposemanagement.client.api.EnumsSerializers.all, blockingEc)
   }
 
   object PurposeManagementApi {
@@ -19,12 +20,11 @@ package object service {
   }
 
   object CatalogManagementInvoker {
-    def apply()(implicit actorSystem: ActorSystem): CatalogManagementInvoker =
-      catalogmanagement.client.invoker.ApiInvoker(catalogmanagement.client.api.EnumsSerializers.all)
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): CatalogManagementInvoker =
+      catalogmanagement.client.invoker.ApiInvoker(catalogmanagement.client.api.EnumsSerializers.all, blockingEc)
   }
 
   object CatalogManagementApi {
     def apply(baseUrl: String): CatalogManagementApi = catalogmanagement.client.api.EServiceApi(baseUrl)
   }
-
 }

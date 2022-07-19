@@ -12,8 +12,6 @@ import it.pagopa.interop.commons.utils.CORSSupport
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
 import it.pagopa.interop.notifier.server.Controller
 import it.pagopa.interop.notifier.service.impl._
-import kamon.Kamon
-
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import buildinfo.BuildInfo
@@ -29,11 +27,7 @@ import akka.actor.typed.DispatcherSelector
 
 object Main extends App with CORSSupport with Dependencies {
 
-  Kamon.init()
-
   val logger: Logger = Logger(this.getClass)
-
-  System.setProperty("kanela.show-banner", "false")
 
   val system: ActorSystem[Nothing] = ActorSystem[Nothing](
     Behaviors.setup[Nothing] { context =>
@@ -107,7 +101,4 @@ object Main extends App with CORSSupport with Dependencies {
     },
     BuildInfo.name
   )
-
-  system.whenTerminated.onComplete(_ => Kamon.stop())(scala.concurrent.ExecutionContext.global)
-
 }

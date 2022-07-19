@@ -1,11 +1,9 @@
 import ProjectSettings.ProjectFrom
 import com.typesafe.sbt.packager.docker.Cmd
 
-ThisBuild / scalaVersion        := "2.13.8"
-ThisBuild / organization        := "it.pagopa"
-ThisBuild / organizationName    := "Pagopa S.p.A."
-ThisBuild / libraryDependencies := Dependencies.Jars.`server`
-
+ThisBuild / scalaVersion      := "2.13.8"
+ThisBuild / organization      := "it.pagopa"
+ThisBuild / organizationName  := "Pagopa S.p.A."
 ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
 ThisBuild / version           := ComputeVersion.version
 Global / onChangedBuildSource := ReloadOnSourceChanges
@@ -77,7 +75,7 @@ runStandalone := {
 
 lazy val generated = project
   .in(file("generated"))
-  .settings(scalacOptions := Seq(), scalafmtOnCompile := true)
+  .settings(scalacOptions := Seq(), scalafmtOnCompile := true, libraryDependencies := Dependencies.Jars.`server`)
   .setupBuildInfo
 
 lazy val client = project
@@ -112,14 +110,13 @@ lazy val root = (project in file("."))
     Docker / packageName        := s"${name.value}",
     Docker / dockerExposedPorts := Seq(8080),
     Docker / maintainer         := "https://pagopa.it",
+    libraryDependencies         := Dependencies.Jars.`server`,
     dockerCommands += Cmd("LABEL", s"org.opencontainers.image.source https://github.com/pagopa/${name.value}")
   )
   .aggregate(client)
   .dependsOn(generated)
-  .enablePlugins(JavaAppPackaging, JavaAgent)
+  .enablePlugins(JavaAppPackaging)
   .setupBuildInfo
-
-javaAgents += "io.kamon" % "kanela-agent" % "1.0.14"
 
 Test / fork := true
 Test / javaOptions += "-Dconfig.file=src/test/resources/application-test.conf"

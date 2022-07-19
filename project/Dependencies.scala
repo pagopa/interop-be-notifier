@@ -161,7 +161,7 @@ object Dependencies {
       pagopa.queueManager              % Compile,
       postgres.jdbc                    % Compile,
       scanamo.scanamo                  % Compile,
-      scalaprotobuf.core               % Protobuf,
+      scalaprotobuf.core               % "protobuf,compile",
       scalatest.core                   % Test,
       scalamock.core                   % Test,
       akka.testkit                     % Test

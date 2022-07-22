@@ -15,10 +15,12 @@ import scala.reflect.runtime.universe.{typeOf, TypeTag}
 
 class PersistentSerializationSpec extends ScalaCheckSuite with DiffxAssertions {
 
-  serdeCheck[State, StateV1](stateGen, _.sorted)
   deserCheck[State, StateV1](stateGen)
-  serdeCheck[EventIdAdded, EventIdAddedV1](eventIdAddedGen)
+  serdeCheck[State, StateV1](stateGen, _.sorted)
+  roundTripA[State, StateV1](stateGen)
+  roundTripB[State, StateV1](stateGen, _.sorted)
   deserCheck[EventIdAdded, EventIdAddedV1](eventIdAddedGen)
+  serdeCheck[EventIdAdded, EventIdAddedV1](eventIdAddedGen)
 
   // TODO move me in commons
   def serdeCheck[A: TypeTag, B](gen: Gen[(A, B)], adapter: B => B = identity[B](_))(implicit
@@ -43,6 +45,44 @@ class PersistentSerializationSpec extends ScalaCheckSuite with DiffxAssertions {
         assertEqual(PersistEventDeserializer.from[B, A](stateV1), Right(state))
       }
     }
+
+  // TODO move me in commons
+  def roundTripA[A: TypeTag, B](gen: Gen[(A, B)])(implicit
+    e: PersistEventDeserializer[B, A],
+    f: PersistEventSerializer[A, B],
+    loc: munit.Location,
+    d: => Diff[Either[Throwable, A]]
+  ): Unit =
+    property(s"${typeOf[A].typeSymbol.name.toString} is correctly serialized and re-deserialized") {
+      forAll(gen) { case (state, _) =>
+        // * This is declared lazy in the signature to avoid a MethodTooBigException
+        val result                                     = for {
+          stateV1  <- PersistEventSerializer.to[A, B](state)
+          newState <- PersistEventDeserializer.from[B, A](stateV1)
+        } yield newState
+        implicit val diffX: Diff[Either[Throwable, A]] = d
+        assertEqual(result, Right(state))
+      }
+    }
+
+  // TODO move me in commons
+  def roundTripB[A, B: TypeTag](gen: Gen[(A, B)], adapter: B => B = identity[B](_))(implicit
+    e: PersistEventSerializer[A, B],
+    f: PersistEventDeserializer[B, A],
+    loc: munit.Location,
+    d: => Diff[Either[Throwable, B]]
+  ): Unit =
+    property(s"${typeOf[B].typeSymbol.name.toString} is correctly deserialized and re-serialized") {
+      forAll(gen) { case (_, stateV1) =>
+        // * This is declared lazy in the signature to avoid a MethodTooBigException
+        val result: Either[Throwable, B]               = for {
+          state      <- PersistEventDeserializer.from[B, A](stateV1)
+          newStateV1 <- PersistEventSerializer.to[A, B](state)
+        } yield adapter(newStateV1)
+        implicit val diffX: Diff[Either[Throwable, B]] = d
+        assertEqual(result, Right(adapter(stateV1)))
+      }
+    }
 }
 
 object PersistentSerializationSpec {
@@ -53,7 +93,8 @@ object PersistentSerializationSpec {
   } yield (organizationId, nextId)
 
   val stateGen: Gen[(State, StateV1)] = for {
-    map <- Gen.mapOf(stateEntryGen)
+    n   <- Gen.chooseNum(0, 10)
+    map <- Gen.listOfN(n, stateEntryGen).map(_.toMap)
     stateEntryList = map.toList.map { case (k, v) => StateEntryV1(k, v) }
   } yield (State(map), StateV1(stateEntryList))
 

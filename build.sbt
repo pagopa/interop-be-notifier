@@ -81,7 +81,7 @@ lazy val generated = project
 lazy val models = project
   .in(file("models"))
   .settings(
-    name              := "interop-be-authorization-management-models",
+    name              := "interop-be-notifier-models",
     scalafmtOnCompile := true,
     Docker / publish  := {},
     publishTo         := {

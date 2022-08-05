@@ -33,6 +33,7 @@ object Dependencies {
     lazy val slf4j            = namespace            %% "akka-slf4j"                   % akkaVersion
     lazy val stream           = namespace            %% "akka-stream-typed"            % akkaVersion
     lazy val testkit          = namespace            %% "akka-actor-testkit-typed"     % akkaVersion
+    lazy val httpTestkit      = namespace            %% "akka-http-testkit"            % akkaHttpVersion
   }
 
   private[this] object awssdk {
@@ -100,8 +101,9 @@ object Dependencies {
       namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
     lazy val purposeManagementModels =
       namespace %% "interop-be-purpose-management-models" % purposeManagementVersion
-    lazy val commons      = namespace %% "interop-commons-utils"         % commonsVersion
+    lazy val commonsUtils = namespace %% "interop-commons-utils"         % commonsVersion
     lazy val commonsJWT   = namespace %% "interop-commons-jwt"           % commonsVersion
+    lazy val commonsCqrs  = namespace %% "interop-commons-cqrs"          % commonsVersion
     lazy val vault        = namespace %% "interop-commons-signer"        % commonsVersion
     lazy val queueManager = namespace %% "interop-commons-queue-manager" % commonsVersion
   }
@@ -115,7 +117,7 @@ object Dependencies {
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
     lazy val `server`: Seq[ModuleID]  = Seq(
       // For making Java 12 happy
-      "javax.annotation"               % "javax.annotation-api" % "1.3.2"  % "compile",
+      "javax.annotation"               % "javax.annotation-api"           % "1.3.2"                    % "compile",
       //
       akka.actorTyped                  % Compile,
       akka.clusterBootstrap            % Compile,
@@ -147,22 +149,26 @@ object Dependencies {
       pagopa.catalogManagementClient   % Compile,
       pagopa.purposeManagementClient   % Compile,
       pagopa.purposeManagementModels   % Compile,
-      pagopa.commons                   % Compile,
+      pagopa.commonsUtils              % "compile,it",
       pagopa.commonsJWT                % Compile,
+      pagopa.commonsCqrs               % "compile,it",
       pagopa.vault                     % Compile,
       pagopa.queueManager              % Compile,
-      postgres.jdbc                    % Compile,
+      postgres.jdbc                    % "compile,it",
       scanamo.scanamo                  % Compile,
       scalaprotobuf.core               % "protobuf,compile",
-      scalatest.core                   % Test,
-      scalamock.core                   % Test,
-      akka.testkit                     % Test,
-      "org.scalameta"                 %% "munit-scalacheck"     % "0.7.29" % Test,
-      "com.softwaremill.diffx"        %% "diffx-munit"          % "0.7.0"  % Test
+      scalatest.core                   % "test,it",
+      scalamock.core                   % "test,it",
+      akka.testkit                     % "test,it",
+      akka.httpTestkit                 % "test,it",
+      "org.scalameta"                 %% "munit-scalacheck"               % "0.7.29"                   % Test,
+      "com.softwaremill.diffx"        %% "diffx-munit"                    % "0.7.0"                    % Test,
+      "com.dimafeng"                  %% "testcontainers-scala-scalatest" % testcontainersScalaVersion % IntegrationTest
     )
     lazy val client: Seq[ModuleID]    =
-      Seq(akka.stream, akka.http, akka.httpJson4s, akka.slf4j, json4s.jackson, json4s.ext, pagopa.commons).map(
+      Seq(akka.stream, akka.http, akka.httpJson4s, akka.slf4j, json4s.jackson, json4s.ext, pagopa.commonsUtils).map(
         _ % Compile
       )
+    lazy val models: List[ModuleID]   = List(pagopa.commonsUtils).map(_ % Compile)
   }
 }

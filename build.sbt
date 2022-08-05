@@ -74,6 +74,8 @@ runStandalone := {
 }
 
 lazy val generated = project
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings: _*)
   .in(file("generated"))
   .settings(scalacOptions := Seq(), scalafmtOnCompile := true, libraryDependencies := Dependencies.Jars.`server`)
   .setupBuildInfo
@@ -81,10 +83,11 @@ lazy val generated = project
 lazy val models = project
   .in(file("models"))
   .settings(
-    name              := "interop-be-notifier-models",
-    scalafmtOnCompile := true,
-    Docker / publish  := {},
-    publishTo         := {
+    name                := "interop-be-notifier-models",
+    libraryDependencies := Dependencies.Jars.models,
+    scalafmtOnCompile   := true,
+    Docker / publish    := {},
+    publishTo           := {
       val nexus = s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/"
       if (isSnapshot.value) Some("snapshots" at nexus + "maven-snapshots/")
       else Some("releases" at nexus + "maven-releases/")
@@ -111,9 +114,15 @@ lazy val client = project
   )
 
 lazy val root = (project in file("."))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings: _*)
   .settings(
     name                        := "interop-be-notifier",
     Test / parallelExecution    := false,
+    Test / fork                 := true,
+    Test / javaOptions += "-Dconfig.file=src/test/resources/application-test.conf",
+    IntegrationTest / fork      := true,
+    IntegrationTest / javaOptions += "-Dconfig.file=src/it/resources/application-it.conf",
     scalafmtOnCompile           := true,
     dockerBuildOptions ++= Seq("--network=host"),
     dockerRepository            := Some(System.getenv("DOCKER_REPO")),
@@ -130,6 +139,3 @@ lazy val root = (project in file("."))
   .dependsOn(generated, models)
   .enablePlugins(JavaAppPackaging)
   .setupBuildInfo
-
-Test / fork := true
-Test / javaOptions += "-Dconfig.file=src/test/resources/application-test.conf"

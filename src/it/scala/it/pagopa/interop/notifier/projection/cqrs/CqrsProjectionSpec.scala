@@ -19,8 +19,6 @@ class CqrsProjectionSpec extends ScalaTestWithActorTestKit(ItSpecConfiguration.c
       val expected =
         JsObject(("id", JsString(organizationId.toString)), ("eventId", JsNumber(result.get.eventId)))
 
-//      println("waiting....")
-//      Thread.sleep(60000)
       val persisted = findOne[JsObject](organizationId.toString).futureValue
 
       expected shouldBe persisted
@@ -37,7 +35,6 @@ class CqrsProjectionSpec extends ScalaTestWithActorTestKit(ItSpecConfiguration.c
       val expected =
         JsObject(("id", JsString(organizationId.toString)), ("eventId", JsNumber(result.get.eventId)))
 
-//      Thread.sleep(5000)
       val persisted = findOne[JsObject](organizationId.toString).futureValue
 
       expected shouldBe persisted

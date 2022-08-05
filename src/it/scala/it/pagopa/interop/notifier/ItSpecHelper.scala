@@ -13,7 +13,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.OAuth2BearerToken
 import akka.http.scaladsl.server.directives.{AuthenticationDirective, SecurityDirectives}
 import it.pagopa.interop.commons.utils.AkkaUtils.getShard
-import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.notifier.api._
 import it.pagopa.interop.notifier.api.impl._
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
@@ -51,9 +50,7 @@ trait ItSpecHelper
       headers.`X-Forwarded-For`(RemoteAddress(InetAddress.getByName("127.0.0.1")))
     )
 
-  val mockUUIDSupplier: UUIDSupplier           = mock[UUIDSupplier]
-  val mockTimeSupplier: OffsetDateTimeSupplier = mock[OffsetDateTimeSupplier]
-  val mockDynamoService: DynamoService         = mock[DynamoService]
+  val mockDynamoService: DynamoService = mock[DynamoService]
 
   val healthApiMock: HealthApi = mock[HealthApi]
 

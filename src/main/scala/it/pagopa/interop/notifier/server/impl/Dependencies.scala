@@ -2,12 +2,13 @@ package it.pagopa.interop.notifier.server.impl
 
 import akka.actor.typed.{ActorSystem, Behavior}
 import akka.cluster.sharding.typed.ShardingEnvelope
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext, ShardedDaemonProcess}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.persistence.typed.PersistenceId
+import akka.projection.ProjectionBehavior
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
@@ -30,10 +31,14 @@ import it.pagopa.interop.notifier.api.impl.{
 }
 import it.pagopa.interop.notifier.api.{EventsApi, HealthApi}
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
+import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.{numberOfProjectionTags, projectionTag}
+import it.pagopa.interop.notifier.model.persistence.projection.NotifierCqrsProjection
 import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotificationEventIdBehavior}
 import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
@@ -54,10 +59,28 @@ trait Dependencies {
     )
     .toFuture
 
-  private val notificationBehaviorFactory: EntityContext[Command] => Behavior[Command] = { entityContext =>
+  def initProjections()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): Unit = {
+    val dbConfig: DatabaseConfig[JdbcProfile] =
+      DatabaseConfig.forConfig("akka-persistence-jdbc.shared-databases.slick")
+
+    val mongoDbConfig = ApplicationConfiguration.mongoDb
+
+    val projectionId   = "notifier-cqrs-projections"
+    val cqrsProjection = NotifierCqrsProjection.projection(dbConfig, mongoDbConfig, projectionId)
+
+    ShardedDaemonProcess(actorSystem).init[ProjectionBehavior.Command](
+      name = projectionId,
+      numberOfInstances = numberOfProjectionTags,
+      behaviorFactory = (i: Int) => ProjectionBehavior(cqrsProjection.projection(projectionTag(i))),
+      stopMessage = ProjectionBehavior.Stop
+    )
+  }
+  val notificationBehaviorFactory: EntityContext[Command] => Behavior[Command]            = { entityContext =>
+    val i = math.abs(entityContext.entityId.hashCode % numberOfProjectionTags)
     OrganizationNotificationEventIdBehavior(
       entityContext.shard,
-      PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId)
+      PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId),
+      projectionTag(i)
     )
   }
 

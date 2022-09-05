@@ -8,7 +8,7 @@ import spray.json.DefaultJsonProtocol
 
 object EventsApiMarshallerImpl extends EventsApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
 
-  override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
+  override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
   override implicit def toEntityMarshallerEvents: ToEntityMarshaller[Events] =
     sprayJsonMarshaller[Events]

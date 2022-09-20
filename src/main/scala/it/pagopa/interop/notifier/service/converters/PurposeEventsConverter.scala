@@ -1,49 +1,42 @@
 package it.pagopa.interop.notifier.service.converters
 
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{DynamoEventPayload, PurposeEventPayload}
-import it.pagopa.interop.notifier.service.{CatalogManagementService, PurposeManagementService}
-import it.pagopa.interop.purposemanagement.model.persistence._
 import it.pagopa.interop.notifier.service.converters.EventType._
+import it.pagopa.interop.notifier.service.{CatalogManagementService, DynamoService}
+import it.pagopa.interop.purposemanagement.model.persistence._
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 object PurposeEventsConverter {
-  def getRecipient(
-    catalogManagementService: CatalogManagementService,
-    purposeManagementService: PurposeManagementService
-  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): PartialFunction[ProjectableEvent, Future[UUID]] = {
-    case e: Event => getEventRecipient(catalogManagementService, purposeManagementService, e)
+  def getRecipient(catalogManagementService: CatalogManagementService, dynamoService: DynamoService)(implicit
+    ec: ExecutionContext,
+    contexts: Seq[(String, String)]
+  ): PartialFunction[ProjectableEvent, Future[UUID]] = { case e: Event =>
+    getEventRecipient(catalogManagementService, dynamoService, e)
   }
 
   private[this] def getEventRecipient(
     catalogManagementService: CatalogManagementService,
-    purposeManagementService: PurposeManagementService,
+    dynamoService: DynamoService,
     event: Event
   )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[UUID] = {
-    def producer(purposeId: String): Future[UUID] = for {
-      p        <- purposeManagementService.getPurpose(purposeId)
-      producer <- catalogManagementService.getEServiceProducerByEServiceId(p.eserviceId)
-    } yield producer
 
     event match {
-      case PurposeCreated(purpose) =>
+      case PurposeCreated(purpose)                  =>
         catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
-      case PurposeUpdated(purpose) => catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
-      case PurposeVersionCreated(purposeId, _)      => producer(purposeId)
-      case PurposeVersionActivated(purpose)         =>
-        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
-      case PurposeVersionSuspended(purpose)         =>
-        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
-      case PurposeVersionWaitedForApproval(purpose) =>
-        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
-      case PurposeVersionArchived(purpose)          =>
-        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
-      case PurposeVersionUpdated(purposeId, _)      => producer(purposeId)
-      case PurposeVersionDeleted(purposeId, _)      => producer(purposeId)
-      case PurposeDeleted(purposeId)                => producer(purposeId)
+      case PurposeUpdated(purpose)                  => dynamoService.getOrganizationId(purpose.id)
+      case PurposeVersionCreated(purposeId, _)      => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
+      case PurposeVersionActivated(purpose)         => dynamoService.getOrganizationId(purpose.id)
+      case PurposeVersionSuspended(purpose)         => dynamoService.getOrganizationId(purpose.id)
+      case PurposeVersionWaitedForApproval(purpose) => dynamoService.getOrganizationId(purpose.id)
+      case PurposeVersionArchived(purpose)          => dynamoService.getOrganizationId(purpose.id)
+      case PurposeVersionUpdated(purposeId, _)      => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
+      case PurposeVersionDeleted(purposeId, _)      => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
+      case PurposeDeleted(purposeId)                => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
     }
   }
 

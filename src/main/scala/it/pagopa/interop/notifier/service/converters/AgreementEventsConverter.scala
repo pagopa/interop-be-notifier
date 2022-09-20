@@ -1,24 +1,36 @@
 package it.pagopa.interop.notifier.service.converters
 import it.pagopa.interop.agreementmanagement.model.persistence._
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{AgreementEventPayload, DynamoEventPayload}
+import it.pagopa.interop.notifier.service.DynamoService
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object AgreementEventsConverter {
 
-  def getRecipient: PartialFunction[ProjectableEvent, Future[UUID]] = { case e: Event =>
-    Future.successful(getEventRecipient(e))
+  def getRecipient(
+    dynamoService: DynamoService
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): PartialFunction[ProjectableEvent, Future[UUID]] = {
+    case e: Event =>
+      getEventRecipient(dynamoService, e)
   }
 
-  private[this] def getEventRecipient(event: Event): UUID = event match {
-    case VerifiedAttributeUpdated(a) => a.producerId
-    case AgreementAdded(a)           => a.producerId
-    case AgreementActivated(a)       => a.producerId
-    case AgreementSuspended(a)       => a.producerId
-    case AgreementDeactivated(a)     => a.producerId
+  private[this] def getEventRecipient(dynamoService: DynamoService, event: Event)(implicit
+    ec: ExecutionContext,
+    contexts: Seq[(String, String)]
+  ): Future[UUID] = event match {
+    case AgreementAdded(a)                       => Future.successful(a.producerId)
+    case AgreementDeleted(id)                    => id.toFutureUUID.flatMap(dynamoService.getOrganizationId)
+    case AgreementUpdated(a)                     => Future.successful(a.producerId)
+    case AgreementConsumerDocumentAdded(id, _)   => id.toFutureUUID.flatMap(dynamoService.getOrganizationId)
+    case AgreementConsumerDocumentRemoved(id, _) => id.toFutureUUID.flatMap(dynamoService.getOrganizationId)
+    case VerifiedAttributeUpdated(a)             => Future.successful(a.producerId)
+    case AgreementActivated(a)                   => Future.successful(a.producerId)
+    case AgreementSuspended(a)                   => Future.successful(a.producerId)
+    case AgreementDeactivated(a)                 => Future.successful(a.producerId)
   }
 
   def asDynamoPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = {
@@ -26,7 +38,22 @@ object AgreementEventsConverter {
   }
 
   private[this] def getEventPayload(event: Event): Either[ComponentError, DynamoEventPayload] = event match {
-    case VerifiedAttributeUpdated(a) =>
+    case AgreementAdded(a)     =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ADDED.toString))
+    case AgreementUpdated(a)   =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ADDED.toString))
+    case AgreementDeleted(id)  => Right(AgreementEventPayload(agreementId = id, eventType = EventType.DELETED.toString))
+    case AgreementActivated(a) =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.UPDATED.toString))
+    case AgreementSuspended(a) =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.UPDATED.toString))
+    case AgreementDeactivated(a)                 =>
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.UPDATED.toString))
+    case AgreementConsumerDocumentAdded(id, _)   =>
+      Right(AgreementEventPayload(agreementId = id, eventType = EventType.UPDATED.toString))
+    case AgreementConsumerDocumentRemoved(id, _) =>
+      Right(AgreementEventPayload(agreementId = id, eventType = EventType.UPDATED.toString))
+    case VerifiedAttributeUpdated(a)             =>
       Right(
         AgreementEventPayload(
           agreementId = a.id.toString,
@@ -34,14 +61,7 @@ object AgreementEventsConverter {
           objectType = "AGREEMENT_VERIFIED_ATTRIBUTE"
         )
       )
-    case AgreementAdded(a)           =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ADDED.toString))
-    case AgreementActivated(a)       =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ACTIVATED.toString))
-    case AgreementSuspended(a)       =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.SUSPENDED.toString))
-    case AgreementDeactivated(a)     =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.DEACTIVATED.toString))
+
   }
 
 }

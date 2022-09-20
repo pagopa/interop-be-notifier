@@ -26,11 +26,17 @@ final case class DynamoMessage(
   eventJournalPersistenceId: String,
   eventJournalSequenceNumber: Long,
   eventTimestamp: Long,
+  resourceId: String,
   payload: DynamoEventPayload
 )
 
 object DynamoMessage {
-  def toDynamoMessage(organizationId: String, eventId: Long, message: Message): Either[ComponentError, DynamoMessage] =
+  def toDynamoMessage(
+    organizationId: String,
+    resourceId: String,
+    eventId: Long,
+    message: Message
+  ): Either[ComponentError, DynamoMessage] =
     for {
       payload <- toDynamoPayload(message.payload)
     } yield DynamoMessage(
@@ -40,6 +46,7 @@ object DynamoMessage {
       eventJournalPersistenceId = message.eventJournalPersistenceId,
       eventJournalSequenceNumber = message.eventJournalSequenceNumber,
       eventTimestamp = message.eventTimestamp,
+      resourceId = resourceId,
       payload = payload
     )
 

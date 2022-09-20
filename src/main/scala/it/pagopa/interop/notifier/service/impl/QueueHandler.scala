@@ -1,5 +1,6 @@
 package it.pagopa.interop.notifier.service.impl
 
+import com.typesafe.scalalogging.Logger
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
@@ -10,7 +11,6 @@ import it.pagopa.interop.notifier.service.converters.{
   notFoundRecipient
 }
 import it.pagopa.interop.notifier.service.{CatalogManagementService, DynamoService, PurposeManagementService}
-import com.typesafe.scalalogging.Logger
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,16 +52,12 @@ class QueueHandler(
   } yield result
 
   // gets the identifier of the recipient organization id
-  private[this] def getRecipientId(
-    message: ProjectableEvent
-  )(implicit contexts: Seq[(String, String)]): Future[UUID] = {
-    val composedGetters =
-      PurposeEventsConverter.getRecipient(
-        catalogManagementService,
-        purposeManagementService
-      ) orElse AgreementEventsConverter.getRecipient orElse notFoundRecipient
+  private[this] def getRecipientId(event: ProjectableEvent)(implicit contexts: Seq[(String, String)]): Future[UUID] = {
+    val composedGetters: PartialFunction[ProjectableEvent, Future[UUID]] =
+      PurposeEventsConverter.getRecipient(catalogManagementService, dynamoService) orElse AgreementEventsConverter
+        .getRecipient(dynamoService) orElse notFoundRecipient
 
-    composedGetters(message)
+    composedGetters(event)
   }
 
 }

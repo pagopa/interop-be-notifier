@@ -31,4 +31,5 @@ trait DynamoService {
     contexts: Seq[(String, String)]
   ): Future[List[DynamoMessage]]
 
+  def getOrganizationId(resourceId: UUID)(implicit contexts: Seq[(String, String)]): Future[UUID]
 }

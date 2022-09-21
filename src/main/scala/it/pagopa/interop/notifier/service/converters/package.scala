@@ -3,7 +3,11 @@ package it.pagopa.interop.notifier.service
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.notifier.error.NotifierErrors.{DynamoConverterNotFound, MessageRecipientNotFound}
+import it.pagopa.interop.notifier.error.NotifierErrors.{
+  DynamoConverterNotFound,
+  MessageRecipientNotFound,
+  OrganizationIdNotFound
+}
 import it.pagopa.interop.notifier.model.DynamoEventPayload
 import it.pagopa.interop.notifier.model.persistence.MessageId
 
@@ -25,10 +29,10 @@ package object converters {
     val ADDED, CREATED, DELETED, UPDATED, SUSPENDED, DEACTIVATED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL = Value
   }
 
-  def createMessageId(
+  def getMessageIdFromDynamo(
     dynamoService: DynamoService
   )(resourceId: UUID)(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = for {
     found          <- dynamoService.getOrganizationId(resourceId)
-    organizationId <- found.toFuture(new RuntimeException)
+    organizationId <- found.toFuture(OrganizationIdNotFound(resourceId.toString))
   } yield MessageId(resourceId, organizationId)
 }

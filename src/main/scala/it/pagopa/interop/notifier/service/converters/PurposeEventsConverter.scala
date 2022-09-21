@@ -16,27 +16,27 @@ object PurposeEventsConverter {
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): PartialFunction[ProjectableEvent, Future[MessageId]] = { case e: Event =>
-    getMessageId(catalogManagementService, dynamoService, e)
+    getMessageIdFromEvent(catalogManagementService, dynamoService, e)
   }
 
-  private[this] def getMessageId(
+  private[this] def getMessageIdFromEvent(
     catalogManagementService: CatalogManagementService,
     dynamoService: DynamoService,
     event: Event
   )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = event match {
-    case PurposeCreated(purpose)                  =>
+    case PurposeCreated(purpose)             =>
       catalogManagementService
         .getEServiceProducerByEServiceId(purpose.eserviceId)
         .map(organizationId => MessageId(purpose.id, organizationId))
-    case PurposeUpdated(purpose)                  => createMessageId(dynamoService)(purpose.id)
-    case PurposeVersionCreated(purposeId, _)      => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
-    case PurposeVersionActivated(purpose)         => createMessageId(dynamoService)(purpose.id)
-    case PurposeVersionSuspended(purpose)         => createMessageId(dynamoService)(purpose.id)
-    case PurposeVersionWaitedForApproval(purpose) => createMessageId(dynamoService)(purpose.id)
-    case PurposeVersionArchived(purpose)          => createMessageId(dynamoService)(purpose.id)
-    case PurposeVersionUpdated(purposeId, _)      => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
-    case PurposeVersionDeleted(purposeId, _)      => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
-    case PurposeDeleted(purposeId)                => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
+    case PurposeUpdated(purpose)             => getMessageIdFromDynamo(dynamoService)(purpose.id)
+    case PurposeVersionCreated(purposeId, _) => purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
+    case PurposeVersionActivated(purpose)    => getMessageIdFromDynamo(dynamoService)(purpose.id)
+    case PurposeVersionSuspended(purpose)    => getMessageIdFromDynamo(dynamoService)(purpose.id)
+    case PurposeVersionWaitedForApproval(purpose) => getMessageIdFromDynamo(dynamoService)(purpose.id)
+    case PurposeVersionArchived(purpose)          => getMessageIdFromDynamo(dynamoService)(purpose.id)
+    case PurposeVersionUpdated(purposeId, _) => purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
+    case PurposeVersionDeleted(purposeId, _) => purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
+    case PurposeDeleted(purposeId)           => purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
   }
 
   def asDynamoPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = {

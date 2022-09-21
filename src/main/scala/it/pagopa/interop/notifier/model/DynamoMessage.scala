@@ -3,10 +3,9 @@ package it.pagopa.interop.notifier.model
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.persistence.MessageId
-import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter}
+import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter, notFoundPayload}
 import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
-import it.pagopa.interop.notifier.service.converters.notFoundPayload
 
 import java.util.UUID
 
@@ -47,7 +46,7 @@ object DynamoMessage {
     )
 
   private[this] def toDynamoPayload(event: ProjectableEvent): Either[ComponentError, DynamoEventPayload] = {
-    val composed =
+    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] =
       PurposeEventsConverter.asDynamoPayload orElse AgreementEventsConverter.asDynamoPayload orElse notFoundPayload
     composed(event)
   }

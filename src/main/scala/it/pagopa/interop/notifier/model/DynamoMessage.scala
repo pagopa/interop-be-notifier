@@ -2,6 +2,7 @@ package it.pagopa.interop.notifier.model
 
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.notifier.model.persistence.MessageId
 import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter}
 import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
@@ -31,22 +32,17 @@ final case class DynamoMessage(
 )
 
 object DynamoMessage {
-  def toDynamoMessage(
-    organizationId: String,
-    resourceId: String,
-    eventId: Long,
-    message: Message
-  ): Either[ComponentError, DynamoMessage] =
+  def toDynamoMessage(messageId: MessageId, eventId: Long, message: Message): Either[ComponentError, DynamoMessage] =
     for {
       payload <- toDynamoPayload(message.payload)
     } yield DynamoMessage(
-      organizationId,
-      eventId,
+      organizationId = messageId.organizationId.toString,
+      eventId = eventId,
       messageUUID = message.messageUUID,
       eventJournalPersistenceId = message.eventJournalPersistenceId,
       eventJournalSequenceNumber = message.eventJournalSequenceNumber,
       eventTimestamp = message.eventTimestamp,
-      resourceId = resourceId,
+      resourceId = messageId.resourceId.toString,
       payload = payload
     )
 

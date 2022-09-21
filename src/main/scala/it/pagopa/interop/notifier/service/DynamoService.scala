@@ -2,6 +2,7 @@ package it.pagopa.interop.notifier.service
 
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.notifier.model.DynamoMessage
+import it.pagopa.interop.notifier.model.persistence.MessageId
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -18,7 +19,7 @@ trait DynamoService {
     * @param message - message to be persisted
     * @return
     */
-  def put(organizationId: UUID, eventId: Long, message: Message): Future[Unit]
+  def put(messageId: MessageId, eventId: Long, message: Message): Future[Unit]
 
   /**
     * Returns list of persisted messages by oranizationId and eventId
@@ -31,5 +32,5 @@ trait DynamoService {
     contexts: Seq[(String, String)]
   ): Future[List[DynamoMessage]]
 
-  def getOrganizationId(resourceId: UUID)(implicit contexts: Seq[(String, String)]): Future[UUID]
+  def getOrganizationId(resourceId: UUID)(implicit contexts: Seq[(String, String)]): Future[Option[UUID]]
 }

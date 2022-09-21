@@ -3,41 +3,40 @@ package it.pagopa.interop.notifier.service.converters
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.notifier.model.persistence.MessageId
 import it.pagopa.interop.notifier.model.{DynamoEventPayload, PurposeEventPayload}
 import it.pagopa.interop.notifier.service.converters.EventType._
 import it.pagopa.interop.notifier.service.{CatalogManagementService, DynamoService}
 import it.pagopa.interop.purposemanagement.model.persistence._
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 object PurposeEventsConverter {
-  def getRecipient(catalogManagementService: CatalogManagementService, dynamoService: DynamoService)(implicit
+  def getMessageId(catalogManagementService: CatalogManagementService, dynamoService: DynamoService)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): PartialFunction[ProjectableEvent, Future[UUID]] = { case e: Event =>
-    getEventRecipient(catalogManagementService, dynamoService, e)
+  ): PartialFunction[ProjectableEvent, Future[MessageId]] = { case e: Event =>
+    getMessageId(catalogManagementService, dynamoService, e)
   }
 
-  private[this] def getEventRecipient(
+  private[this] def getMessageId(
     catalogManagementService: CatalogManagementService,
     dynamoService: DynamoService,
     event: Event
-  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[UUID] = {
-
-    event match {
-      case PurposeCreated(purpose)                  =>
-        catalogManagementService.getEServiceProducerByEServiceId(purpose.eserviceId)
-      case PurposeUpdated(purpose)                  => dynamoService.getOrganizationId(purpose.id)
-      case PurposeVersionCreated(purposeId, _)      => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
-      case PurposeVersionActivated(purpose)         => dynamoService.getOrganizationId(purpose.id)
-      case PurposeVersionSuspended(purpose)         => dynamoService.getOrganizationId(purpose.id)
-      case PurposeVersionWaitedForApproval(purpose) => dynamoService.getOrganizationId(purpose.id)
-      case PurposeVersionArchived(purpose)          => dynamoService.getOrganizationId(purpose.id)
-      case PurposeVersionUpdated(purposeId, _)      => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
-      case PurposeVersionDeleted(purposeId, _)      => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
-      case PurposeDeleted(purposeId)                => purposeId.toFutureUUID.flatMap(dynamoService.getOrganizationId)
-    }
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = event match {
+    case PurposeCreated(purpose)                  =>
+      catalogManagementService
+        .getEServiceProducerByEServiceId(purpose.eserviceId)
+        .map(organizationId => MessageId(purpose.id, organizationId))
+    case PurposeUpdated(purpose)                  => createMessageId(dynamoService)(purpose.id)
+    case PurposeVersionCreated(purposeId, _)      => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
+    case PurposeVersionActivated(purpose)         => createMessageId(dynamoService)(purpose.id)
+    case PurposeVersionSuspended(purpose)         => createMessageId(dynamoService)(purpose.id)
+    case PurposeVersionWaitedForApproval(purpose) => createMessageId(dynamoService)(purpose.id)
+    case PurposeVersionArchived(purpose)          => createMessageId(dynamoService)(purpose.id)
+    case PurposeVersionUpdated(purposeId, _)      => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
+    case PurposeVersionDeleted(purposeId, _)      => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
+    case PurposeDeleted(purposeId)                => purposeId.toFutureUUID.flatMap(createMessageId(dynamoService))
   }
 
   def asDynamoPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = {

@@ -3,34 +3,34 @@ import it.pagopa.interop.agreementmanagement.model.persistence._
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.notifier.model.persistence.MessageId
 import it.pagopa.interop.notifier.model.{AgreementEventPayload, DynamoEventPayload}
 import it.pagopa.interop.notifier.service.DynamoService
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 object AgreementEventsConverter {
 
-  def getRecipient(
-    dynamoService: DynamoService
-  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): PartialFunction[ProjectableEvent, Future[UUID]] = {
-    case e: Event =>
-      getEventRecipient(dynamoService, e)
-  }
-
-  private[this] def getEventRecipient(dynamoService: DynamoService, event: Event)(implicit
+  def getMessageId(dynamoService: DynamoService)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): Future[UUID] = event match {
-    case AgreementAdded(a)                       => Future.successful(a.producerId)
-    case AgreementDeleted(id)                    => id.toFutureUUID.flatMap(dynamoService.getOrganizationId)
-    case AgreementUpdated(a)                     => Future.successful(a.producerId)
-    case AgreementConsumerDocumentAdded(id, _)   => id.toFutureUUID.flatMap(dynamoService.getOrganizationId)
-    case AgreementConsumerDocumentRemoved(id, _) => id.toFutureUUID.flatMap(dynamoService.getOrganizationId)
-    case VerifiedAttributeUpdated(a)             => Future.successful(a.producerId)
-    case AgreementActivated(a)                   => Future.successful(a.producerId)
-    case AgreementSuspended(a)                   => Future.successful(a.producerId)
-    case AgreementDeactivated(a)                 => Future.successful(a.producerId)
+  ): PartialFunction[ProjectableEvent, Future[MessageId]] = { case e: Event =>
+    getMessageId(dynamoService, e)
+  }
+
+  private[this] def getMessageId(dynamoService: DynamoService, event: Event)(implicit
+    ec: ExecutionContext,
+    contexts: Seq[(String, String)]
+  ): Future[MessageId] = event match {
+    case AgreementAdded(a)                       => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementDeleted(id)                    => id.toFutureUUID.flatMap(createMessageId(dynamoService))
+    case AgreementUpdated(a)                     => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementConsumerDocumentAdded(id, _)   => id.toFutureUUID.flatMap(createMessageId(dynamoService))
+    case AgreementConsumerDocumentRemoved(id, _) => id.toFutureUUID.flatMap(createMessageId(dynamoService))
+    case VerifiedAttributeUpdated(a)             => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementActivated(a)                   => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementSuspended(a)                   => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementDeactivated(a)                 => Future.successful(MessageId(a.id, a.producerId))
   }
 
   def asDynamoPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = {
@@ -41,7 +41,7 @@ object AgreementEventsConverter {
     case AgreementAdded(a)     =>
       Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ADDED.toString))
     case AgreementUpdated(a)   =>
-      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.ADDED.toString))
+      Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.UPDATED.toString))
     case AgreementDeleted(id)  => Right(AgreementEventPayload(agreementId = id, eventType = EventType.DELETED.toString))
     case AgreementActivated(a) =>
       Right(AgreementEventPayload(agreementId = a.id.toString, eventType = EventType.UPDATED.toString))

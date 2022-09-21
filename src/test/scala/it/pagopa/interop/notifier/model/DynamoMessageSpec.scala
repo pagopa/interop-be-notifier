@@ -4,7 +4,8 @@ import it.pagopa.interop.agreementmanagement.model.agreement.{Active, Persistent
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementActivated
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.service.converters.EventType.{ACTIVATED, CREATED}
+import it.pagopa.interop.notifier.model.persistence.MessageId
+import it.pagopa.interop.notifier.service.converters.EventType.{CREATED, UPDATED}
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeCreated
 import it.pagopa.interop.purposemanagement.model.purpose.PersistentPurpose
 import org.scalatest.matchers.should.Matchers
@@ -43,21 +44,22 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val message =
         Message(messageId, eventJournalPersistenceId, eventJournalSequenceNumber, eventTimestamp, kind, payload = event)
 
-      val organizationId = UUID.randomUUID().toString
+      val organizationId = UUID.randomUUID()
       val eventId        = 1L
 
       // when
       val conversion: Either[ComponentError, DynamoMessage] =
-        DynamoMessage.toDynamoMessage(organizationId, eventId, message)
+        DynamoMessage.toDynamoMessage(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
       val expected                                          = DynamoMessage(
-        organizationId,
+        organizationId.toString,
         eventId,
         messageUUID = messageId,
         eventJournalPersistenceId = eventJournalPersistenceId,
         eventJournalSequenceNumber = eventJournalSequenceNumber,
         eventTimestamp = eventTimestamp,
-        payload = PurposeEventPayload(id.toString, CREATED.toString)
+        payload = PurposeEventPayload(id.toString, CREATED.toString),
+        resourceId = id.toString
       )
       conversion shouldBe Right(expected)
     }
@@ -79,10 +81,15 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         consumerId = UUID.randomUUID(),
         state = Active,
         verifiedAttributes = Seq.empty,
+        certifiedAttributes = Seq.empty,
+        declaredAttributes = Seq.empty,
         suspendedByConsumer = None,
         suspendedByProducer = None,
+        suspendedByPlatform = None,
+        consumerDocuments = List.empty,
         createdAt = OffsetDateTime.now(),
-        updatedAt = None
+        updatedAt = None,
+        consumerNotes = None
       )
 
       val event = AgreementActivated(pa)
@@ -90,21 +97,22 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val message =
         Message(messageId, eventJournalPersistenceId, eventJournalSequenceNumber, eventTimestamp, kind, payload = event)
 
-      val organizationId = UUID.randomUUID().toString
+      val organizationId = UUID.randomUUID()
       val eventId        = 1L
 
       // when
       val conversion: Either[ComponentError, DynamoMessage] =
-        DynamoMessage.toDynamoMessage(organizationId, eventId, message)
+        DynamoMessage.toDynamoMessage(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
       val expected                                          = DynamoMessage(
-        organizationId,
+        organizationId.toString,
         eventId,
         messageUUID = messageId,
         eventJournalPersistenceId = eventJournalPersistenceId,
         eventJournalSequenceNumber = eventJournalSequenceNumber,
         eventTimestamp = eventTimestamp,
-        payload = AgreementEventPayload(id.toString, ACTIVATED.toString)
+        payload = AgreementEventPayload(id.toString, UPDATED.toString),
+        resourceId = id.toString
       )
       conversion shouldBe Right(expected)
     }

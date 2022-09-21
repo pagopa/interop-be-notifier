@@ -2,8 +2,8 @@ package it.pagopa.interop.notifier.service.converters
 
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{DynamoEventPayload, PurposeEventPayload}
-import it.pagopa.interop.purposemanagement.model.persistence.{PurposeCreated, PurposeVersionWaitedForApproval}
-import it.pagopa.interop.purposemanagement.model.purpose.PersistentPurpose
+import it.pagopa.interop.purposemanagement.model.persistence._
+import it.pagopa.interop.purposemanagement.model.purpose.{Active, PersistentPurpose, PersistentPurposeVersion}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -26,14 +26,111 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.CREATED.toString))
     }
 
+    "Convert purpose updated to event payload" in {
+      // given
+      val id = UUID.randomUUID()
+      val pp = getPurpose(id)
+      val p  = PurposeUpdated(pp)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(p)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.UPDATED.toString))
+    }
+
+    "Convert purpose version created to event payload" in {
+      // given
+      val id        = UUID.randomUUID()
+      val versionId = UUID.randomUUID()
+      val pv        = getPurposeVersion(versionId)
+      val e         = PurposeVersionCreated(id.toString, pv)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.CREATED.toString))
+    }
+
+    "Convert purpose activated to event payload" in {
+      // given
+      val id = UUID.randomUUID()
+      val pp = getPurpose(id)
+      val e  = PurposeVersionActivated(pp)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.ACTIVATED.toString))
+    }
+
+    "Convert purpose suspended to event payload" in {
+      // given
+      val id = UUID.randomUUID()
+      val pp = getPurpose(id)
+      val e  = PurposeVersionSuspended(pp)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.SUSPENDED.toString))
+    }
+
+    "Convert purpose archived to event payload" in {
+      // given
+      val id = UUID.randomUUID()
+      val pp = getPurpose(id)
+      val e  = PurposeVersionArchived(pp)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.ARCHIVED.toString))
+    }
+
+    "Convert purpose version updated to event payload" in {
+      // given
+      val id        = UUID.randomUUID()
+      val versionId = UUID.randomUUID()
+      val pp        = getPurposeVersion(versionId)
+      val e         = PurposeVersionUpdated(id.toString, pp)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.UPDATED.toString))
+    }
+
+    "Convert purpose version deleted to event payload" in {
+      // given
+      val id        = UUID.randomUUID()
+      val versionId = UUID.randomUUID()
+      val e         = PurposeVersionDeleted(id.toString, versionId.toString)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.DELETED.toString))
+    }
+
+    "Convert purpose deleted to event payload" in {
+      // given
+      val id = UUID.randomUUID()
+      val e  = PurposeDeleted(id.toString)
+
+      // when
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
+      // then
+      conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.DELETED.toString))
+    }
+
     "Convert purpose waited for approval to event payload" in {
       // given
       val id = UUID.randomUUID()
       val pp = getPurpose(id)
-      val p  = PurposeVersionWaitedForApproval(pp)
+      val e  = PurposeVersionWaitedForApproval(pp)
 
       // when
-      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(p)
+      val conversion: Either[ComponentError, DynamoEventPayload] = PurposeEventsConverter.asDynamoPayload(e)
       // then
       conversion shouldBe Right(PurposeEventPayload(id.toString, EventType.WAITING_FOR_APPROVAL.toString))
     }
@@ -51,6 +148,17 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
     riskAnalysisForm = None,
     createdAt = OffsetDateTime.now(),
     updatedAt = None
+  )
+
+  private def getPurposeVersion(versionId: UUID): PersistentPurposeVersion = PersistentPurposeVersion(
+    id = versionId,
+    state = Active,
+    expectedApprovalDate = None,
+    riskAnalysis = None,
+    dailyCalls = 10,
+    createdAt = OffsetDateTime.now(),
+    updatedAt = None,
+    firstActivationAt = None
   )
 
 }

@@ -2,10 +2,10 @@ package it.pagopa.interop.notifier.model
 
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter}
+import it.pagopa.interop.notifier.model.persistence.MessageId
+import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter, notFoundPayload}
 import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
-import it.pagopa.interop.notifier.service.converters.notFoundPayload
 
 import java.util.UUID
 
@@ -26,25 +26,27 @@ final case class DynamoMessage(
   eventJournalPersistenceId: String,
   eventJournalSequenceNumber: Long,
   eventTimestamp: Long,
+  resourceId: String,
   payload: DynamoEventPayload
 )
 
 object DynamoMessage {
-  def toDynamoMessage(organizationId: String, eventId: Long, message: Message): Either[ComponentError, DynamoMessage] =
+  def toDynamoMessage(messageId: MessageId, eventId: Long, message: Message): Either[ComponentError, DynamoMessage] =
     for {
       payload <- toDynamoPayload(message.payload)
     } yield DynamoMessage(
-      organizationId,
-      eventId,
+      organizationId = messageId.organizationId.toString,
+      eventId = eventId,
       messageUUID = message.messageUUID,
       eventJournalPersistenceId = message.eventJournalPersistenceId,
       eventJournalSequenceNumber = message.eventJournalSequenceNumber,
       eventTimestamp = message.eventTimestamp,
+      resourceId = messageId.resourceId.toString,
       payload = payload
     )
 
   private[this] def toDynamoPayload(event: ProjectableEvent): Either[ComponentError, DynamoEventPayload] = {
-    val composed =
+    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] =
       PurposeEventsConverter.asDynamoPayload orElse AgreementEventsConverter.asDynamoPayload orElse notFoundPayload
     composed(event)
   }

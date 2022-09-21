@@ -89,7 +89,7 @@ trait Dependencies {
     Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
   def dynamoReader()(implicit ec: ExecutionContext): DynamoServiceImpl =
-    new DynamoServiceImpl(ApplicationConfiguration.dynamoTableName)
+    new DynamoServiceImpl(ApplicationConfiguration.dynamoTableName, ApplicationConfiguration.dynamoInvertedIndexName)
 
   def eventsApi(dynamoReader: DynamoService, jwtReader: JWTReader)(implicit ec: ExecutionContext): EventsApi =
     new EventsApi(

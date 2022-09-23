@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Route
 import it.pagopa.interop.notifier.api.HealthApiService
 import it.pagopa.interop.notifier.model.Problem
 
-class HealthServiceApiImpl extends HealthApiService {
+object HealthServiceApiImpl extends HealthApiService {
 
   /** Code: 200, Message: successful operation, DataType: Problem
     */

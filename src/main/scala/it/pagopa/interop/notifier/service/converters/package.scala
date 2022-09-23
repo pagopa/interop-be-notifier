@@ -1,15 +1,15 @@
 package it.pagopa.interop.notifier.service
 
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
-import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.error.NotifierErrors.{
   DynamoConverterNotFound,
   MessageRecipientNotFound,
   OrganizationIdNotFound
 }
-import it.pagopa.interop.notifier.model.DynamoEventPayload
-import it.pagopa.interop.notifier.model.persistence.MessageId
+import it.pagopa.interop.notifier.model.{IndexQuery, MessageId, NotificationPayload}
+import it.pagopa.interop.notifier.service.impl.DynamoIndexService
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,7 +20,7 @@ package object converters {
     Future.failed(MessageRecipientNotFound(x.getClass.getName))
   }
 
-  def notFoundPayload: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] = { case x =>
+  def notFoundPayload: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] = { case x =>
     Left(DynamoConverterNotFound(x.getClass.getName))
   }
 
@@ -30,9 +30,9 @@ package object converters {
   }
 
   def getMessageIdFromDynamo(
-    dynamoService: DynamoService
+    dynamoIndexService: DynamoIndexService
   )(resourceId: UUID)(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = for {
-    found          <- dynamoService.getOrganizationId(resourceId)
-    organizationId <- found.toFuture(OrganizationIdNotFound(resourceId.toString))
-  } yield MessageId(resourceId, organizationId)
+    found     <- dynamoIndexService.getOne(IndexQuery(resourceId))
+    messageId <- found.toFuture(OrganizationIdNotFound(resourceId.toString))
+  } yield messageId
 }

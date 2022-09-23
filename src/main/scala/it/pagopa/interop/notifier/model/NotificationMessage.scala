@@ -2,7 +2,6 @@ package it.pagopa.interop.notifier.model
 
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.model.persistence.MessageId
 import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter, notFoundPayload}
 import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
@@ -19,7 +18,7 @@ import java.util.UUID
   * @param eventTimestamp - timestamp of the persistence event on the journal, as coming from the persistence layer
   * @param payload - actual event payload, modeled according to the specific event type 
   */
-final case class DynamoMessage(
+final case class NotificationMessage(
   organizationId: String,
   eventId: Long,
   messageUUID: UUID,
@@ -27,14 +26,21 @@ final case class DynamoMessage(
   eventJournalSequenceNumber: Long,
   eventTimestamp: Long,
   resourceId: String,
-  payload: DynamoEventPayload
+  payload: NotificationPayload
 )
 
-object DynamoMessage {
-  def toDynamoMessage(messageId: MessageId, eventId: Long, message: Message): Either[ComponentError, DynamoMessage] =
+object NotificationMessage {
+
+  implicit val formatNotificationPayload: DynamoFormat[NotificationPayload] = deriveDynamoFormat
+  implicit val formatNotificationMessage: DynamoFormat[NotificationMessage] = deriveDynamoFormat
+  def toNotificationMessage(
+    messageId: MessageId,
+    eventId: Long,
+    message: Message
+  ): Either[ComponentError, NotificationMessage] =
     for {
-      payload <- toDynamoPayload(message.payload)
-    } yield DynamoMessage(
+      payload <- toNotificationPayload(message.payload)
+    } yield NotificationMessage(
       organizationId = messageId.organizationId.toString,
       eventId = eventId,
       messageUUID = message.messageUUID,
@@ -45,14 +51,11 @@ object DynamoMessage {
       payload = payload
     )
 
-  private[this] def toDynamoPayload(event: ProjectableEvent): Either[ComponentError, DynamoEventPayload] = {
-    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, DynamoEventPayload]] =
-      PurposeEventsConverter.asDynamoPayload orElse AgreementEventsConverter.asDynamoPayload orElse notFoundPayload
+  private[this] def toNotificationPayload(event: ProjectableEvent): Either[ComponentError, NotificationPayload] = {
+    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] =
+      PurposeEventsConverter.asNotificationPayload orElse
+        AgreementEventsConverter.asNotificationPayload orElse
+        notFoundPayload
     composed(event)
   }
-}
-
-object DynamoMessageFormatters {
-  implicit val formatPayload: DynamoFormat[DynamoEventPayload]  = deriveDynamoFormat
-  implicit val formatDynamoMessage: DynamoFormat[DynamoMessage] = deriveDynamoFormat
 }

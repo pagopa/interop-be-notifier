@@ -7,8 +7,6 @@ import it.pagopa.interop.notifier.model.persistence.serializer.v1.state.{StateEn
 
 package object v1 {
 
-  type ErrorOr[A] = Either[Throwable, A]
-
   implicit def stateV1PersistEventDeserializer: PersistEventDeserializer[StateV1, State] =
     state => State(state.identifiers.map(entry => entry.key -> entry.value).toMap).asRight[Throwable]
 

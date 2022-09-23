@@ -17,7 +17,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-final class EventIdRetriever(
+class EventIdRetriever(
   system: ActorSystem[_],
   sharding: ClusterSharding,
   entity: Entity[Command, ShardingEnvelope[Command]]

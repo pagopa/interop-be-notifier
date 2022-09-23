@@ -1,6 +1,6 @@
 package it.pagopa.interop.notifier.model
 
-sealed trait DynamoEventPayload {
+sealed trait NotificationPayload {
 
   /**
     * Defines type of this object, e.g.: AGREEMENT, PURPOSE, etc.
@@ -19,11 +19,11 @@ sealed trait DynamoEventPayload {
 
 }
 
-case class PurposeEventPayload(purposeId: String, eventType: String, objectType: String = "PURPOSE")
-    extends DynamoEventPayload {
+final case class PurposePayload(purposeId: String, eventType: String, objectType: String = "PURPOSE")
+    extends NotificationPayload {
   override val objectId: Map[String, String] = Map("purposeId" -> purposeId)
 }
-case class AgreementEventPayload(agreementId: String, eventType: String, objectType: String = "AGREEMENT")
-    extends DynamoEventPayload {
+final case class AgreementPayload(agreementId: String, eventType: String, objectType: String = "AGREEMENT")
+    extends NotificationPayload {
   override val objectId: Map[String, String] = Map("agreementId" -> agreementId)
 }

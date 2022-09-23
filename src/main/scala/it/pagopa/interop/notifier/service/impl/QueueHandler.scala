@@ -5,23 +5,23 @@ import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER}
-import it.pagopa.interop.notifier.model.persistence.MessageId
+import it.pagopa.interop.notifier.model.{MessageId, NotificationRecord}
 import it.pagopa.interop.notifier.service.converters.{
   AgreementEventsConverter,
   PurposeEventsConverter,
   notFoundRecipient
 }
-import it.pagopa.interop.notifier.service.{CatalogManagementService, DynamoService, PurposeManagementService}
+import it.pagopa.interop.notifier.service.CatalogManagementService
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class QueueHandler(
-  val interopTokenGenerator: InteropTokenGenerator,
-  val idRetriever: EventIdRetriever,
-  val dynamoService: DynamoService,
-  val catalogManagementService: CatalogManagementService,
-  val purposeManagementService: PurposeManagementService
+  interopTokenGenerator: InteropTokenGenerator,
+  idRetriever: EventIdRetriever,
+  dynamoNotificationService: DynamoNotificationService,
+  dynamoIndexService: DynamoIndexService,
+  catalogManagementService: CatalogManagementService
 )(implicit ec: ExecutionContext) {
 
   lazy val jwtConfig: JWTInternalTokenConfig = JWTConfiguration.jwtInternalTokenConfig
@@ -44,20 +44,20 @@ class QueueHandler(
         secondsDuration = jwtConfig.durationInSeconds
       )
     m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
-    messageId <- extractMessageId(msg.payload)(m2mContexts)
+    messageId <- extractMessageId(msg.payload, dynamoIndexService)(m2mContexts)
     _ = logger.debug(s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}")
     nextEvent <- idRetriever.getNextEventIdForOrganization(messageId.organizationId)(m2mContexts)
     _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
-    result <- dynamoService.put(messageId, nextEvent.eventId, msg)
+    result <- dynamoNotificationService.put(NotificationRecord(messageId, nextEvent.eventId, msg))
     _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
   } yield result
 
-  private[this] def extractMessageId(
-    event: ProjectableEvent
-  )(implicit contexts: Seq[(String, String)]): Future[MessageId] = {
+  private[this] def extractMessageId(event: ProjectableEvent, dynamoIndexService: DynamoIndexService)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[MessageId] = {
     val composedGetters: PartialFunction[ProjectableEvent, Future[MessageId]] =
-      PurposeEventsConverter.getMessageId(catalogManagementService, dynamoService) orElse AgreementEventsConverter
-        .getMessageId(dynamoService) orElse notFoundRecipient
+      PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse AgreementEventsConverter
+        .getMessageId(dynamoIndexService) orElse notFoundRecipient
 
     composedGetters(event)
   }

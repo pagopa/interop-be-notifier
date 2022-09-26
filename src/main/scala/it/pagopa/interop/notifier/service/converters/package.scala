@@ -9,7 +9,7 @@ import it.pagopa.interop.notifier.error.NotifierErrors.{
   OrganizationIdNotFound
 }
 import it.pagopa.interop.notifier.model.{MessageId, NotificationPayload}
-import it.pagopa.interop.notifier.service.impl.DynamoIndexService
+import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import org.scanamo.ScanamoAsync
 
 import java.util.UUID
@@ -30,7 +30,7 @@ package object converters {
     val ADDED, CREATED, DELETED, UPDATED, SUSPENDED, DEACTIVATED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL = Value
   }
 
-  def getMessageIdFromDynamo(dynamoIndexService: DynamoIndexService)(
+  def getMessageIdFromDynamo(dynamoIndexService: DynamoNotificationResourcesService)(
     resourceId: UUID
   )(implicit scanamo: ScanamoAsync, ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = for {
     found     <- dynamoIndexService.getOne(resourceId)

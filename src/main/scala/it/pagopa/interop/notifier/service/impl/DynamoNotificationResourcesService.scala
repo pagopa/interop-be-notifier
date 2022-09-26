@@ -15,13 +15,13 @@ import org.scanamo.syntax._
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-object DynamoIndexService extends DynamoIndexService
-trait DynamoIndexService {
+object DynamoNotificationResourcesService extends DynamoNotificationResourcesService
+trait DynamoNotificationResourcesService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  val messageIds: Table[MessageId] = Table[MessageId](ApplicationConfiguration.dynamoIndexTableName)
+  val messageIds: Table[MessageId] = Table[MessageId](ApplicationConfiguration.dynamoNotificationResourcesTableName)
 
   def put(messageId: MessageId)(implicit scanamo: ScanamoAsync): Future[Unit] = scanamo.exec(messageIds.put(messageId))
 

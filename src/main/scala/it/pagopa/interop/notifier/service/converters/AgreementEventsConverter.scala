@@ -4,14 +4,14 @@ import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{AgreementPayload, MessageId, NotificationPayload}
-import it.pagopa.interop.notifier.service.impl.DynamoIndexService
+import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import org.scanamo.ScanamoAsync
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object AgreementEventsConverter {
 
-  def getMessageId(dynamoService: DynamoIndexService)(implicit
+  def getMessageId(dynamoService: DynamoNotificationResourcesService)(implicit
     scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
@@ -19,7 +19,7 @@ object AgreementEventsConverter {
     getMessageIdFromEvent(dynamoService, e)
   }
 
-  private[this] def getMessageIdFromEvent(dynamoService: DynamoIndexService, event: Event)(implicit
+  private[this] def getMessageIdFromEvent(dynamoService: DynamoNotificationResourcesService, event: Event)(implicit
     scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]

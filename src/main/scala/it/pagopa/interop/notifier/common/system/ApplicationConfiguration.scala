@@ -4,14 +4,15 @@ import com.typesafe.config.{Config, ConfigFactory}
 import it.pagopa.interop.commons.cqrs.model.MongoDbConfig
 
 object ApplicationConfiguration {
-  val config: Config                      = ConfigFactory.load()
-  val serverPort: Int                     = config.getInt("notifier.port")
-  val catalogManagementURL: String        = config.getString("notifier.services.catalog-management")
-  val dynamoNotificationTableName: String = config.getString("notifier.dynamo.notification-table-name")
-  val dynamoIndexTableName: String        = config.getString("notifier.dynamo.index-table-name")
-  val queueURL: String                    = config.getString("notifier.queue.url")
-  val threadPoolSize: Int                 = config.getInt("notifier.queue.thread-pool-size")
-  val numberOfProjectionTags: Int         = config.getInt("akka.cluster.sharding.number-of-shards")
+  val config: Config                               = ConfigFactory.load()
+  val serverPort: Int                              = config.getInt("notifier.port")
+  val catalogManagementURL: String                 = config.getString("notifier.services.catalog-management")
+  val dynamoNotificationTableName: String          = config.getString("notifier.dynamo.notification-table-name")
+  val dynamoNotificationResourcesTableName: String =
+    config.getString("notifier.dynamo.notification-resources-table-name")
+  val queueURL: String                             = config.getString("notifier.queue.url")
+  val threadPoolSize: Int                          = config.getInt("notifier.queue.thread-pool-size")
+  val numberOfProjectionTags: Int                  = config.getInt("akka.cluster.sharding.number-of-shards")
 
   val interopAudience: Set[String] =
     config.getString("notifier.jwt.audience").split(",").toSet.filter(_.nonEmpty)

@@ -6,14 +6,17 @@ import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{MessageId, NotificationPayload, PurposePayload}
 import it.pagopa.interop.notifier.service.CatalogManagementService
 import it.pagopa.interop.notifier.service.converters.EventType._
-import it.pagopa.interop.notifier.service.impl.DynamoIndexService
+import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import it.pagopa.interop.purposemanagement.model.persistence._
 import org.scanamo.ScanamoAsync
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object PurposeEventsConverter {
-  def getMessageId(catalogManagementService: CatalogManagementService, dynamoIndexService: DynamoIndexService)(implicit
+  def getMessageId(
+    catalogManagementService: CatalogManagementService,
+    dynamoIndexService: DynamoNotificationResourcesService
+  )(implicit
     scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
@@ -23,7 +26,7 @@ object PurposeEventsConverter {
 
   private[this] def getMessageIdFromEvent(
     catalogManagementService: CatalogManagementService,
-    dynamoIndexService: DynamoIndexService,
+    dynamoIndexService: DynamoNotificationResourcesService,
     event: Event
   )(implicit scanamo: ScanamoAsync, ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] =
     event match {

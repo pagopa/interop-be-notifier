@@ -22,7 +22,7 @@ final class QueueHandler(
   interopTokenGenerator: InteropTokenGenerator,
   idRetriever: EventIdRetriever,
   dynamoNotificationService: DynamoNotificationService,
-  dynamoIndexService: DynamoIndexService,
+  dynamoIndexService: DynamoNotificationResourcesService,
   catalogManagementService: CatalogManagementService
 )(implicit ec: ExecutionContext) {
 
@@ -55,10 +55,10 @@ final class QueueHandler(
     _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
   } yield result
 
-  private[this] def extractMessageId(event: ProjectableEvent, dynamoIndexService: DynamoIndexService)(implicit
-    scanamo: ScanamoAsync,
-    contexts: Seq[(String, String)]
-  ): Future[MessageId] = {
+  private[this] def extractMessageId(
+    event: ProjectableEvent,
+    dynamoIndexService: DynamoNotificationResourcesService
+  )(implicit scanamo: ScanamoAsync, contexts: Seq[(String, String)]): Future[MessageId] = {
     val composedGetters: PartialFunction[ProjectableEvent, Future[MessageId]] =
       PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse AgreementEventsConverter
         .getMessageId(dynamoIndexService) orElse notFoundRecipient

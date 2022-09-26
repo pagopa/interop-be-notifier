@@ -64,7 +64,7 @@ object Main extends App with CORSSupport with Dependencies {
         interopTokenGenerator = interopTokenGenerator(blockingEc),
         idRetriever = eventIdRetriever(sharding),
         dynamoNotificationService = DynamoNotificationService,
-        dynamoIndexService = DynamoIndexService,
+        dynamoIndexService = DynamoNotificationResourcesService,
         catalogManagementService = catalogManagementService(blockingEc)
       )
 

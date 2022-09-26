@@ -8,8 +8,9 @@ import it.pagopa.interop.notifier.error.NotifierErrors.{
   MessageRecipientNotFound,
   OrganizationIdNotFound
 }
-import it.pagopa.interop.notifier.model.{IndexQuery, MessageId, NotificationPayload}
+import it.pagopa.interop.notifier.model.{MessageId, NotificationPayload}
 import it.pagopa.interop.notifier.service.impl.DynamoIndexService
+import org.scanamo.ScanamoAsync
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,10 +30,10 @@ package object converters {
     val ADDED, CREATED, DELETED, UPDATED, SUSPENDED, DEACTIVATED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL = Value
   }
 
-  def getMessageIdFromDynamo(
-    dynamoIndexService: DynamoIndexService
-  )(resourceId: UUID)(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = for {
-    found     <- dynamoIndexService.getOne(IndexQuery(resourceId))
+  def getMessageIdFromDynamo(dynamoIndexService: DynamoIndexService)(
+    resourceId: UUID
+  )(implicit scanamo: ScanamoAsync, ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = for {
+    found     <- dynamoIndexService.getOne(resourceId)
     messageId <- found.toFuture(OrganizationIdNotFound(resourceId.toString))
   } yield messageId
 }

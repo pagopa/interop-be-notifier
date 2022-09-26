@@ -3,15 +3,16 @@ import it.pagopa.interop.agreementmanagement.model.persistence._
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.model
 import it.pagopa.interop.notifier.model.{AgreementPayload, MessageId, NotificationPayload}
 import it.pagopa.interop.notifier.service.impl.DynamoIndexService
+import org.scanamo.ScanamoAsync
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object AgreementEventsConverter {
 
   def getMessageId(dynamoService: DynamoIndexService)(implicit
+    scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): PartialFunction[ProjectableEvent, Future[MessageId]] = { case e: Event =>
@@ -19,18 +20,19 @@ object AgreementEventsConverter {
   }
 
   private[this] def getMessageIdFromEvent(dynamoService: DynamoIndexService, event: Event)(implicit
+    scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): Future[MessageId] = event match {
-    case AgreementAdded(a)                       => Future.successful(model.MessageId(a.id, a.producerId))
+    case AgreementAdded(a)                       => Future.successful(MessageId(a.id, a.producerId))
     case AgreementDeleted(id)                    => id.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
-    case AgreementUpdated(a)                     => Future.successful(model.MessageId(a.id, a.producerId))
+    case AgreementUpdated(a)                     => Future.successful(MessageId(a.id, a.producerId))
     case AgreementConsumerDocumentAdded(id, _)   => id.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
     case AgreementConsumerDocumentRemoved(id, _) => id.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
-    case VerifiedAttributeUpdated(a)             => Future.successful(model.MessageId(a.id, a.producerId))
-    case AgreementActivated(a)                   => Future.successful(model.MessageId(a.id, a.producerId))
-    case AgreementSuspended(a)                   => Future.successful(model.MessageId(a.id, a.producerId))
-    case AgreementDeactivated(a)                 => Future.successful(model.MessageId(a.id, a.producerId))
+    case VerifiedAttributeUpdated(a)             => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementActivated(a)                   => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementSuspended(a)                   => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementDeactivated(a)                 => Future.successful(MessageId(a.id, a.producerId))
   }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] = {

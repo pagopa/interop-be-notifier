@@ -11,7 +11,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: CatalogManagementApi)(implicit
+final class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: CatalogManagementApi)(implicit
   ec: ExecutionContext
 ) extends CatalogManagementService {
 

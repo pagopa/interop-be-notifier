@@ -1,7 +1,7 @@
 package it.pagopa.interop.notifier.server.impl
 
-import akka.actor.typed.{ActorSystem, DispatcherSelector}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorSystem, DispatcherSelector}
 import akka.cluster.ClusterEvent
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.cluster.typed.{Cluster, Subscribe}
@@ -17,6 +17,8 @@ import it.pagopa.interop.commons.utils.CORSSupport
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
 import it.pagopa.interop.notifier.server.Controller
 import it.pagopa.interop.notifier.service.impl._
+import org.scanamo.ScanamoAsync
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -30,6 +32,7 @@ object Main extends App with CORSSupport with Dependencies {
     Behaviors.setup[Nothing] { context =>
       implicit val actorSystem: ActorSystem[Nothing]          = context.system
       implicit val executionContext: ExecutionContextExecutor = actorSystem.executionContext
+      implicit val scanamo: ScanamoAsync                      = ScanamoAsync(DynamoDbAsyncClient.create())
 
       val selector: DispatcherSelector         = DispatcherSelector.fromConfig("futures-dispatcher")
       val blockingEc: ExecutionContextExecutor = actorSystem.dispatchers.lookup(selector)
@@ -60,8 +63,8 @@ object Main extends App with CORSSupport with Dependencies {
       val handler: QueueHandler = new QueueHandler(
         interopTokenGenerator = interopTokenGenerator(blockingEc),
         idRetriever = eventIdRetriever(sharding),
-        dynamoNotificationService = dynamoNotificationService(),
-        dynamoIndexService = dynamoIndexService(),
+        dynamoNotificationService = DynamoNotificationService,
+        dynamoIndexService = DynamoIndexService,
         catalogManagementService = catalogManagementService(blockingEc)
       )
 
@@ -72,7 +75,7 @@ object Main extends App with CORSSupport with Dependencies {
 
       val serverBinding: Future[Http.ServerBinding] = for {
         jwtReader <- getJwtReader()
-        dynamo     = dynamoNotificationService()
+        dynamo     = DynamoNotificationService
         events     = eventsApi(dynamo, jwtReader)
         controller = new Controller(events, healthApi, validationExceptionToRoute.some)(actorSystem.classicSystem)
         binding <- Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)

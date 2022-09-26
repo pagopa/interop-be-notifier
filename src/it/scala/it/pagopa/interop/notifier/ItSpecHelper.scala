@@ -26,6 +26,8 @@ import it.pagopa.interop.notifier.server.Controller
 import it.pagopa.interop.notifier.server.impl.Dependencies
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 import org.scalamock.scalatest.MockFactory
+import org.scanamo.ScanamoAsync
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import spray.json._
 
 import java.net.InetAddress
@@ -68,6 +70,7 @@ trait ItSpecHelper
     ActorSystem(Behaviors.ignore[Any], name = system.name, config = system.settings.config)
   implicit val executionContext: ExecutionContextExecutor = httpSystem.executionContext
   val classicSystem: actor.ActorSystem                    = httpSystem.classicSystem
+  implicit val scanamo: ScanamoAsync                      = ScanamoAsync(DynamoDbAsyncClient.create())
 
   override def startServer(): Unit = {
     val persistentEntity: Entity[Command, ShardingEnvelope[Command]] =

@@ -5,7 +5,6 @@ import it.pagopa.interop.notifier.{ItSpecConfiguration, ItSpecHelper}
 import spray.json._
 
 import java.util.UUID
-
 class CqrsProjectionSpec extends ScalaTestWithActorTestKit(ItSpecConfiguration.config) with ItSpecHelper {
 
   "Projection" should {

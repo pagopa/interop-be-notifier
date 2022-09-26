@@ -1,5 +1,20 @@
 package it.pagopa.interop.notifier.model
 
+import it.pagopa.interop.commons.queue.message.ProjectableEvent
+import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter, notFoundPayload}
+
+object NotificationPayload {
+  def create(event: ProjectableEvent): Either[ComponentError, NotificationPayload] = {
+    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] =
+      PurposeEventsConverter.asNotificationPayload orElse
+        AgreementEventsConverter.asNotificationPayload orElse
+        notFoundPayload
+    composed(event)
+  }
+
+}
+
 sealed trait NotificationPayload {
 
   /**

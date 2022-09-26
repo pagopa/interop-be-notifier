@@ -37,6 +37,7 @@ import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotifi
 import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
+import org.scanamo.ScanamoAsync
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -88,14 +89,9 @@ trait Dependencies {
   val organizationNotificationEntity: Entity[Command, ShardingEnvelope[Command]] =
     Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
-  def dynamoNotificationService()(implicit ec: ExecutionContext): DynamoNotificationService =
-    new DynamoNotificationService(ApplicationConfiguration.dynamoNotificationTableName)
-
-  def dynamoIndexService()(implicit ec: ExecutionContext): DynamoIndexService =
-    new DynamoIndexService(ApplicationConfiguration.dynamoIndexTableName)
-
   def eventsApi(dynamoNotificationService: DynamoNotificationService, jwtReader: JWTReader)(implicit
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    scanamo: ScanamoAsync
   ): EventsApi =
     new EventsApi(
       new EventsServiceApiImpl(dynamoNotificationService),

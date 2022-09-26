@@ -1,8 +1,7 @@
 package it.pagopa.interop.notifier.model
 
-import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
+import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.service.converters.{AgreementEventsConverter, PurposeEventsConverter, notFoundPayload}
 import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
 
@@ -33,29 +32,20 @@ object NotificationMessage {
 
   implicit val formatNotificationPayload: DynamoFormat[NotificationPayload] = deriveDynamoFormat
   implicit val formatNotificationMessage: DynamoFormat[NotificationMessage] = deriveDynamoFormat
-  def toNotificationMessage(
-    messageId: MessageId,
-    eventId: Long,
-    message: Message
-  ): Either[ComponentError, NotificationMessage] =
-    for {
-      payload <- toNotificationPayload(message.payload)
-    } yield NotificationMessage(
-      organizationId = messageId.organizationId.toString,
-      eventId = eventId,
-      messageUUID = message.messageUUID,
-      eventJournalPersistenceId = message.eventJournalPersistenceId,
-      eventJournalSequenceNumber = message.eventJournalSequenceNumber,
-      eventTimestamp = message.eventTimestamp,
-      resourceId = messageId.resourceId.toString,
-      payload = payload
-    )
+  def create(messageId: MessageId, eventId: Long, message: Message): Either[ComponentError, NotificationMessage] =
+    NotificationPayload
+      .create(message.payload)
+      .map(payload =>
+        NotificationMessage(
+          organizationId = messageId.organizationId.toString,
+          eventId = eventId,
+          messageUUID = message.messageUUID,
+          eventJournalPersistenceId = message.eventJournalPersistenceId,
+          eventJournalSequenceNumber = message.eventJournalSequenceNumber,
+          eventTimestamp = message.eventTimestamp,
+          resourceId = messageId.resourceId.toString,
+          payload = payload
+        )
+      )
 
-  private[this] def toNotificationPayload(event: ProjectableEvent): Either[ComponentError, NotificationPayload] = {
-    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] =
-      PurposeEventsConverter.asNotificationPayload orElse
-        AgreementEventsConverter.asNotificationPayload orElse
-        notFoundPayload
-    composed(event)
-  }
 }

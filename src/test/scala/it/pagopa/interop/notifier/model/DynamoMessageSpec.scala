@@ -4,7 +4,6 @@ import it.pagopa.interop.agreementmanagement.model.agreement.{Active, Persistent
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementActivated
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.model
 import it.pagopa.interop.notifier.service.converters.EventType.{CREATED, UPDATED}
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeCreated
 import it.pagopa.interop.purposemanagement.model.purpose.PersistentPurpose
@@ -49,11 +48,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
       // when
       val conversion: Either[ComponentError, NotificationMessage] =
-        NotificationMessage.toNotificationMessage(
-          model.MessageId(resourceId = id, organizationId = organizationId),
-          eventId,
-          message
-        )
+        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
       val expected                                                = NotificationMessage(
         organizationId.toString,
@@ -106,11 +101,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
       // when
       val conversion: Either[ComponentError, NotificationMessage] =
-        NotificationMessage.toNotificationMessage(
-          model.MessageId(resourceId = id, organizationId = organizationId),
-          eventId,
-          message
-        )
+        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
       val expected                                                = NotificationMessage(
         organizationId.toString,

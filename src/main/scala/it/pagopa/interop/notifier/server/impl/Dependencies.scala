@@ -37,6 +37,7 @@ import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotifi
 import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
+import org.scanamo.ScanamoAsync
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -88,12 +89,12 @@ trait Dependencies {
   val organizationNotificationEntity: Entity[Command, ShardingEnvelope[Command]] =
     Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
-  def dynamoReader()(implicit ec: ExecutionContext): DynamoServiceImpl =
-    new DynamoServiceImpl(ApplicationConfiguration.dynamoTableName, ApplicationConfiguration.dynamoInvertedIndexName)
-
-  def eventsApi(dynamoReader: DynamoService, jwtReader: JWTReader)(implicit ec: ExecutionContext): EventsApi =
+  def eventsApi(dynamoNotificationService: DynamoNotificationService, jwtReader: JWTReader)(implicit
+    ec: ExecutionContext,
+    scanamo: ScanamoAsync
+  ): EventsApi =
     new EventsApi(
-      new EventsServiceApiImpl(dynamoReader),
+      new EventsServiceApiImpl(dynamoNotificationService),
       EventsApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
     )
@@ -105,7 +106,7 @@ trait Dependencies {
   }
 
   val healthApi: HealthApi = new HealthApi(
-    new HealthServiceApiImpl(),
+    HealthServiceApiImpl,
     HealthApiMarshallerImpl,
     SecurityDirectives.authenticateOAuth2("SecurityRealm", PassThroughAuthenticator),
     loggingEnabled = false
@@ -114,20 +115,14 @@ trait Dependencies {
   def catalogManagementService(
     blockingEc: ExecutionContextExecutor
   )(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): CatalogManagementService =
-    CatalogManagementServiceImpl(
+    new CatalogManagementServiceImpl(
       CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
     )
 
-  def purposeManagementService(
-    blockingEc: ExecutionContextExecutor
-  )(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): PurposeManagementService =
-    PurposeManagementServiceImpl(
-      PurposeManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      PurposeManagementApi(ApplicationConfiguration.purposeManagementURL)
-    )
-
-  def eventIdRetriever(sharding: ClusterSharding)(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]) =
+  def eventIdRetriever(
+    sharding: ClusterSharding
+  )(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): EventIdRetriever =
     new EventIdRetriever(actorSystem, sharding, entity = organizationNotificationEntity)
 
   def interopTokenGenerator(blockingEc: ExecutionContextExecutor)(implicit ex: ExecutionContext) =

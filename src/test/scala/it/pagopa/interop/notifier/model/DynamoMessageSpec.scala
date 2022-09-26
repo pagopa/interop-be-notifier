@@ -4,7 +4,6 @@ import it.pagopa.interop.agreementmanagement.model.agreement.{Active, Persistent
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementActivated
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.model.persistence.MessageId
 import it.pagopa.interop.notifier.service.converters.EventType.{CREATED, UPDATED}
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeCreated
 import it.pagopa.interop.purposemanagement.model.purpose.PersistentPurpose
@@ -48,17 +47,17 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val eventId        = 1L
 
       // when
-      val conversion: Either[ComponentError, DynamoMessage] =
-        DynamoMessage.toDynamoMessage(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+      val conversion: Either[ComponentError, NotificationMessage] =
+        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
-      val expected                                          = DynamoMessage(
+      val expected                                                = NotificationMessage(
         organizationId.toString,
         eventId,
         messageUUID = messageId,
         eventJournalPersistenceId = eventJournalPersistenceId,
         eventJournalSequenceNumber = eventJournalSequenceNumber,
         eventTimestamp = eventTimestamp,
-        payload = PurposeEventPayload(id.toString, CREATED.toString),
+        payload = PurposePayload(id.toString, CREATED.toString),
         resourceId = id.toString
       )
       conversion shouldBe Right(expected)
@@ -101,17 +100,17 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val eventId        = 1L
 
       // when
-      val conversion: Either[ComponentError, DynamoMessage] =
-        DynamoMessage.toDynamoMessage(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+      val conversion: Either[ComponentError, NotificationMessage] =
+        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
-      val expected                                          = DynamoMessage(
+      val expected                                                = NotificationMessage(
         organizationId.toString,
         eventId,
         messageUUID = messageId,
         eventJournalPersistenceId = eventJournalPersistenceId,
         eventJournalSequenceNumber = eventJournalSequenceNumber,
         eventTimestamp = eventTimestamp,
-        payload = AgreementEventPayload(id.toString, UPDATED.toString),
+        payload = AgreementPayload(id.toString, UPDATED.toString),
         resourceId = id.toString
       )
       conversion shouldBe Right(expected)

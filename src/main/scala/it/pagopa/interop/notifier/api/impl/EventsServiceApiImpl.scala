@@ -15,12 +15,16 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationFo
 import it.pagopa.interop.notifier.api.EventsApiService
 import it.pagopa.interop.notifier.error.NotifierErrors.InternalServerError
 import it.pagopa.interop.notifier.model._
-import it.pagopa.interop.notifier.service.DynamoService
+import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
+import org.scanamo.ScanamoAsync
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-class EventsServiceApiImpl(dynamoService: DynamoService)(implicit ec: ExecutionContext) extends EventsApiService {
+final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationService)(implicit
+  scanamo: ScanamoAsync,
+  ec: ExecutionContext
+) extends EventsApiService {
 
   private val logger = Logger.takingImplicit[ContextFieldsToLog](this.getClass())
 
@@ -55,8 +59,8 @@ class EventsServiceApiImpl(dynamoService: DynamoService)(implicit ec: ExecutionC
 
     val result: Future[Events] = for {
       organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
-      dynamoMessages <- dynamoService.get(limit)(organizationId, lastEventId)
-      lastId   = Option.when(dynamoMessages.size > 0)(dynamoMessages.last.eventId)
+      dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
+      lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
       messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
     } yield messages
 
@@ -71,7 +75,7 @@ class EventsServiceApiImpl(dynamoService: DynamoService)(implicit ec: ExecutionC
     }
   }
 
-  private[this] def dynamoPayloadToEvent(message: DynamoMessage): Event =
+  private[this] def dynamoPayloadToEvent(message: NotificationMessage): Event =
     Event(
       eventId = message.eventId,
       eventType = message.payload.eventType,

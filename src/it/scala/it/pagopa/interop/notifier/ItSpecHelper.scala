@@ -24,8 +24,10 @@ import it.pagopa.interop.notifier.model.persistence.{
 }
 import it.pagopa.interop.notifier.server.Controller
 import it.pagopa.interop.notifier.server.impl.Dependencies
-import it.pagopa.interop.notifier.service.DynamoService
+import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 import org.scalamock.scalatest.MockFactory
+import org.scanamo.ScanamoAsync
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import spray.json._
 
 import java.net.InetAddress
@@ -50,7 +52,7 @@ trait ItSpecHelper
       headers.`X-Forwarded-For`(RemoteAddress(InetAddress.getByName("127.0.0.1")))
     )
 
-  val mockDynamoService: DynamoService = mock[DynamoService]
+  val mockDynamoNotificationService: DynamoNotificationService = mock[DynamoNotificationService]
 
   val healthApiMock: HealthApi = mock[HealthApi]
 
@@ -68,6 +70,7 @@ trait ItSpecHelper
     ActorSystem(Behaviors.ignore[Any], name = system.name, config = system.settings.config)
   implicit val executionContext: ExecutionContextExecutor = httpSystem.executionContext
   val classicSystem: actor.ActorSystem                    = httpSystem.classicSystem
+  implicit val scanamo: ScanamoAsync                      = ScanamoAsync(DynamoDbAsyncClient.create())
 
   override def startServer(): Unit = {
     val persistentEntity: Entity[Command, ShardingEnvelope[Command]] =
@@ -77,7 +80,7 @@ trait ItSpecHelper
     sharding.init(persistentEntity)
 
     val attributeApi =
-      new EventsApi(new EventsServiceApiImpl(mockDynamoService), apiMarshaller, wrappingDirective)
+      new EventsApi(new EventsServiceApiImpl(mockDynamoNotificationService), apiMarshaller, wrappingDirective)
 
     if (ApplicationConfiguration.projectionsEnabled) initProjections()
 

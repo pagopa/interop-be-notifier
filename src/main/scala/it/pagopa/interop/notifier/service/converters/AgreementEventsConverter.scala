@@ -24,7 +24,9 @@ object AgreementEventsConverter {
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): Future[MessageId] = event match {
-    case AgreementAdded(a)                       => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementAdded(a)                       =>
+      val messageId: MessageId = MessageId(a.id, a.producerId)
+      dynamoService.put(messageId).map(_ => messageId)
     case AgreementDeleted(id)                    => id.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
     case AgreementUpdated(a)                     => Future.successful(MessageId(a.id, a.producerId))
     case AgreementConsumerDocumentAdded(id, _)   => id.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))

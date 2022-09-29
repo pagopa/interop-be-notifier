@@ -7,9 +7,7 @@ import akka.http.scaladsl.server.{Route, StandardRoute}
 import com.typesafe.scalalogging.Logger
 import it.pagopa.interop.commons.jwt.{M2M_ROLE, authorizeInterop, hasPermissions}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.AkkaUtils.getClaimFuture
-import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
-import it.pagopa.interop.commons.utils.TypeConversions.StringOps
+import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
 import it.pagopa.interop.notifier.api.EventsApiService
@@ -58,7 +56,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     logger.info(s"Retrieving $limit messages from id $lastEventId")
 
     val result: Future[Events] = for {
-      organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
+      organizationId <- getOrganizationIdFutureUUID(contexts)
       dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
       lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
       messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))

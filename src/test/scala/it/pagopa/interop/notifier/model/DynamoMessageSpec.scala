@@ -88,7 +88,8 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         consumerDocuments = List.empty,
         createdAt = OffsetDateTime.now(),
         updatedAt = None,
-        consumerNotes = None
+        consumerNotes = None,
+        rejectionReason = None
       )
 
       val event = AgreementActivated(pa)

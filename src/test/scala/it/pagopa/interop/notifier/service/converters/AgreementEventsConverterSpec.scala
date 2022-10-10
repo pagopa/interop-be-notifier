@@ -133,7 +133,8 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
     consumerDocuments = List.empty,
     createdAt = OffsetDateTime.now(),
     updatedAt = None,
-    consumerNotes = None
+    consumerNotes = None,
+    rejectionReason = None
   )
 
 }

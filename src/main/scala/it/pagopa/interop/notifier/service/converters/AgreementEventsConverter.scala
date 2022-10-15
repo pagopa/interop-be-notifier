@@ -35,6 +35,7 @@ object AgreementEventsConverter {
     case AgreementActivated(a)                   => Future.successful(MessageId(a.id, a.producerId))
     case AgreementSuspended(a)                   => Future.successful(MessageId(a.id, a.producerId))
     case AgreementDeactivated(a)                 => Future.successful(MessageId(a.id, a.producerId))
+    case AgreementContractAdded(id, _)           => id.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoService))
   }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] = {
@@ -64,6 +65,8 @@ object AgreementEventsConverter {
         eventType = EventType.UPDATED.toString,
         objectType = "AGREEMENT_VERIFIED_ATTRIBUTE"
       )
+    case AgreementContractAdded(id, _)           =>
+      AgreementPayload(agreementId = id, eventType = EventType.UPDATED.toString)
 
   }
 

@@ -12,6 +12,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import it.pagopa.interop.agreementmanagement.model.agreement.PersistentStamps
 
 class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
@@ -89,6 +90,8 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         createdAt = OffsetDateTime.now(),
         updatedAt = None,
         consumerNotes = None,
+        contract = None,
+        stamps = PersistentStamps(),
         rejectionReason = None
       )
 

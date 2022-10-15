@@ -18,6 +18,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import it.pagopa.interop.agreementmanagement.model.agreement.PersistentStamps
 
 class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with ScalaFutures {
 
@@ -134,6 +135,8 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
     createdAt = OffsetDateTime.now(),
     updatedAt = None,
     consumerNotes = None,
+    contract = None,
+    stamps = PersistentStamps(),
     rejectionReason = None
   )
 

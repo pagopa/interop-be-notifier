@@ -2,12 +2,10 @@ package it.pagopa.interop.notifier.model.persistence
 
 import akka.actor.typed.ActorRef
 
-import java.util.UUID
-
 sealed trait Command
 
 final case class UpdateOrganizationNotificationEventId(
-  organizationId: UUID,
+  organizationId: String,
   replyTo: ActorRef[Option[PersistentOrganizationEvent]]
 ) extends Command
 

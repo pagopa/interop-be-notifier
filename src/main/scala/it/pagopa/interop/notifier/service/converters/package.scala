@@ -12,10 +12,11 @@ import it.pagopa.interop.notifier.model.{MessageId, NotificationPayload}
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import org.scanamo.ScanamoAsync
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 package object converters {
+
+  final val allOrganizations: String = "all_organizations"
 
   def notFoundRecipient: PartialFunction[ProjectableEvent, Future[MessageId]] = { case x =>
     Future.failed(MessageRecipientNotFound(x.getClass.getName))
@@ -27,13 +28,13 @@ package object converters {
 
   object EventType extends Enumeration {
     type EventType = Value
-    val ADDED, CREATED, DELETED, UPDATED, SUSPENDED, DEACTIVATED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL = Value
+    val ADDED, CREATED, CLONED, DELETED, UPDATED, SUSPENDED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL = Value
   }
 
   def getMessageIdFromDynamo(dynamoIndexService: DynamoNotificationResourcesService)(
-    resourceId: UUID
+    resourceId: String
   )(implicit scanamo: ScanamoAsync, ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] = for {
     found     <- dynamoIndexService.getOne(resourceId)
-    messageId <- found.toFuture(OrganizationIdNotFound(resourceId.toString))
+    messageId <- found.toFuture(OrganizationIdNotFound(resourceId))
   } yield messageId
 }

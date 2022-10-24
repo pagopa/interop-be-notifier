@@ -20,10 +20,10 @@ object OrganizationNotificationEventIdBehavior {
     context.setReceiveTimeout(idleTimeout.get(ChronoUnit.SECONDS) seconds, Idle)
     command match {
       case UpdateOrganizationNotificationEventId(organizationId, replyTo) =>
-        val nextId: Long = state.identifiers.getOrElse(organizationId.toString, 0L) + 1L
+        val nextId: Long = state.identifiers.getOrElse(organizationId, 0L) + 1L
 
         Effect
-          .persist(EventIdAdded(organizationId.toString, nextId))
+          .persist(EventIdAdded(organizationId, nextId))
           .thenRun((_: State) => replyTo ! Some(PersistentOrganizationEvent(organizationId, nextId)))
 
       case Idle =>

@@ -44,12 +44,16 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val message =
         Message(messageId, eventJournalPersistenceId, eventJournalSequenceNumber, eventTimestamp, kind, payload = event)
 
-      val organizationId = UUID.randomUUID()
+      val organizationId = UUID.randomUUID().toString()
       val eventId        = 1L
 
       // when
       val conversion: Either[ComponentError, NotificationMessage] =
-        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+        NotificationMessage.create(
+          MessageId(resourceId = id.toString(), organizationId = organizationId),
+          eventId,
+          message
+        )
       // then
       val expected                                                = NotificationMessage(
         organizationId.toString,
@@ -100,12 +104,16 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val message =
         Message(messageId, eventJournalPersistenceId, eventJournalSequenceNumber, eventTimestamp, kind, payload = event)
 
-      val organizationId = UUID.randomUUID()
+      val organizationId = UUID.randomUUID().toString()
       val eventId        = 1L
 
       // when
       val conversion: Either[ComponentError, NotificationMessage] =
-        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+        NotificationMessage.create(
+          MessageId(resourceId = id.toString(), organizationId = organizationId),
+          eventId,
+          message
+        )
       // then
       val expected                                                = NotificationMessage(
         organizationId.toString,

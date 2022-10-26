@@ -1,6 +1,6 @@
 package it.pagopa.interop.notifier.model
 
-import it.pagopa.interop.agreementmanagement.model.agreement.{Active, PersistentAgreement}
+import it.pagopa.interop.agreementmanagement.model.agreement.{Active, PersistentAgreement, PersistentStamps}
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementActivated
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
@@ -12,7 +12,6 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.time.OffsetDateTime
 import java.util.UUID
-import it.pagopa.interop.agreementmanagement.model.agreement.PersistentStamps
 
 class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
@@ -49,14 +48,10 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
       // when
       val conversion: Either[ComponentError, NotificationMessage] =
-        NotificationMessage.create(
-          MessageId(resourceId = id.toString(), organizationId = organizationId),
-          eventId,
-          message
-        )
+        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
       val expected                                                = NotificationMessage(
-        organizationId.toString,
+        organizationId,
         eventId,
         messageUUID = messageId,
         eventJournalPersistenceId = eventJournalPersistenceId,
@@ -109,14 +104,10 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
       // when
       val conversion: Either[ComponentError, NotificationMessage] =
-        NotificationMessage.create(
-          MessageId(resourceId = id.toString(), organizationId = organizationId),
-          eventId,
-          message
-        )
+        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
       val expected                                                = NotificationMessage(
-        organizationId.toString,
+        organizationId,
         eventId,
         messageUUID = messageId,
         eventJournalPersistenceId = eventJournalPersistenceId,

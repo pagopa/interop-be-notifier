@@ -27,13 +27,13 @@ object CatalogEventsConverter {
   ): Future[MessageId] =
     event match {
       case CatalogItemAdded(c)                     =>
-        val messageId: MessageId = MessageId(c.id.toString(), allOrganizations)
+        val messageId: MessageId = MessageId(c.id, allOrganizations)
         dynamoService.put(messageId).map(_ => messageId)
       case ClonedCatalogItemAdded(c)               =>
-        val messageId: MessageId = MessageId(c.id.toString(), allOrganizations)
+        val messageId: MessageId = MessageId(c.id, allOrganizations)
         dynamoService.put(messageId).map(_ => messageId)
-      case CatalogItemUpdated(c)                   => Future.successful(MessageId(c.id.toString(), allOrganizations))
-      case CatalogItemWithDescriptorsDeleted(c, _) => Future.successful(MessageId(c.id.toString(), allOrganizations))
+      case CatalogItemUpdated(c)                   => Future.successful(MessageId(c.id, allOrganizations))
+      case CatalogItemWithDescriptorsDeleted(c, _) => Future.successful(MessageId(c.id, allOrganizations))
       case CatalogItemDocumentUpdated(id, _, _, _) => getMessageIdFromDynamo(dynamoService)(id)
       case CatalogItemDeleted(id)                  => getMessageIdFromDynamo(dynamoService)(id)
       case CatalogItemDocumentAdded(id, _, _, _)   => getMessageIdFromDynamo(dynamoService)(id)

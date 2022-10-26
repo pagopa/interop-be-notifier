@@ -33,7 +33,7 @@ object PurposeEventsConverter {
         for {
           messageId <- catalogManagementService
             .getEServiceProducerByEServiceId(purpose.eserviceId)
-            .map(organizationId => MessageId(purpose.id.toString(), organizationId.toString()))
+            .map(organizationId => MessageId(purpose.id, organizationId.toString()))
           _         <- dynamoIndexService.put(messageId)
         } yield messageId
       case PurposeUpdated(purpose)                  => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString())

@@ -109,6 +109,6 @@ trait ItSpecHelper
         getShard(organizationId.toString, ApplicationConfiguration.numberOfProjectionTags)
       )
 
-    commander.ask(ref => UpdateOrganizationNotificationEventId(organizationId, ref)).futureValue
+    commander.ask(ref => UpdateOrganizationNotificationEventId(organizationId.toString(), ref)).futureValue
   }
 }

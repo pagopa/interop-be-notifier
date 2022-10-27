@@ -1,7 +1,6 @@
 package it.pagopa.interop.notifier.service.converters
 
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
-import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{MessageId, NotificationPayload, PurposePayload}
 import it.pagopa.interop.notifier.service.CatalogManagementService
@@ -34,21 +33,18 @@ object PurposeEventsConverter {
         for {
           messageId <- catalogManagementService
             .getEServiceProducerByEServiceId(purpose.eserviceId)
-            .map(organizationId => MessageId(purpose.id, organizationId))
+            .map(organizationId => MessageId(purpose.id, organizationId.toString()))
           _         <- dynamoIndexService.put(messageId)
         } yield messageId
-      case PurposeUpdated(purpose)                  => getMessageIdFromDynamo(dynamoIndexService)(purpose.id)
-      case PurposeVersionCreated(purposeId, _)      =>
-        purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoIndexService))
-      case PurposeVersionActivated(purpose)         => getMessageIdFromDynamo(dynamoIndexService)(purpose.id)
-      case PurposeVersionSuspended(purpose)         => getMessageIdFromDynamo(dynamoIndexService)(purpose.id)
-      case PurposeVersionWaitedForApproval(purpose) => getMessageIdFromDynamo(dynamoIndexService)(purpose.id)
-      case PurposeVersionArchived(purpose)          => getMessageIdFromDynamo(dynamoIndexService)(purpose.id)
-      case PurposeVersionUpdated(purposeId, _)      =>
-        purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoIndexService))
-      case PurposeVersionDeleted(purposeId, _)      =>
-        purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoIndexService))
-      case PurposeDeleted(purposeId) => purposeId.toFutureUUID.flatMap(getMessageIdFromDynamo(dynamoIndexService))
+      case PurposeUpdated(purpose)                  => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString())
+      case PurposeVersionCreated(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId)
+      case PurposeVersionActivated(purpose)         => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString())
+      case PurposeVersionSuspended(purpose)         => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString())
+      case PurposeVersionWaitedForApproval(purpose) => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString())
+      case PurposeVersionArchived(purpose)          => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString())
+      case PurposeVersionUpdated(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId)
+      case PurposeVersionDeleted(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId)
+      case PurposeDeleted(purposeId)                => getMessageIdFromDynamo(dynamoIndexService)(purposeId)
     }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] = {
@@ -58,16 +54,16 @@ object PurposeEventsConverter {
 
   private[this] def getEventNotificationPayload(event: Event): NotificationPayload =
     event match {
-      case PurposeCreated(purpose)                  => PurposePayload(purpose.id.toString, CREATED.toString)
-      case PurposeUpdated(purpose)                  => PurposePayload(purpose.id.toString, UPDATED.toString)
+      case PurposeCreated(purpose)                  => PurposePayload(purpose.id.toString(), CREATED.toString())
+      case PurposeUpdated(purpose)                  => PurposePayload(purpose.id.toString(), UPDATED.toString())
       case PurposeVersionCreated(purposeId, _)      => PurposePayload(purposeId, CREATED.toString)
-      case PurposeVersionActivated(purpose)         => PurposePayload(purpose.id.toString, ACTIVATED.toString)
-      case PurposeVersionSuspended(purpose)         => PurposePayload(purpose.id.toString, SUSPENDED.toString)
+      case PurposeVersionActivated(purpose)         => PurposePayload(purpose.id.toString(), ACTIVATED.toString())
+      case PurposeVersionSuspended(purpose)         => PurposePayload(purpose.id.toString(), SUSPENDED.toString())
       case PurposeVersionWaitedForApproval(purpose) =>
-        PurposePayload(purpose.id.toString, WAITING_FOR_APPROVAL.toString)
-      case PurposeVersionArchived(purpose)          => PurposePayload(purpose.id.toString, ARCHIVED.toString)
-      case PurposeVersionUpdated(purposeId, _)      => PurposePayload(purposeId, UPDATED.toString)
-      case PurposeVersionDeleted(purposeId, _)      => PurposePayload(purposeId, DELETED.toString)
-      case PurposeDeleted(purposeId)                => PurposePayload(purposeId, DELETED.toString)
+        PurposePayload(purpose.id.toString(), WAITING_FOR_APPROVAL.toString)
+      case PurposeVersionArchived(purpose)          => PurposePayload(purpose.id.toString(), ARCHIVED.toString())
+      case PurposeVersionUpdated(purposeId, _)      => PurposePayload(purposeId, UPDATED.toString())
+      case PurposeVersionDeleted(purposeId, _)      => PurposePayload(purposeId, DELETED.toString())
+      case PurposeDeleted(purposeId)                => PurposePayload(purposeId, DELETED.toString())
     }
 }

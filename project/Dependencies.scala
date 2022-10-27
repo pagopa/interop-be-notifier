@@ -95,6 +95,9 @@ object Dependencies {
     lazy val namespace               = "it.pagopa"
     lazy val catalogManagementClient =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
+
+    lazy val catalogManagementModels =
+      namespace %% "interop-be-catalog-management-models" % catalogManagementVersion
     lazy val agreementManagementModels =
       namespace %% "interop-be-agreement-management-models" % agreementManagementVersion
     lazy val purposeManagementModels =
@@ -145,6 +148,7 @@ object Dependencies {
       mustache.mustache                % Compile,
       pagopa.agreementManagementModels % Compile,
       pagopa.catalogManagementClient   % Compile,
+      pagopa.catalogManagementModels   % Compile,
       pagopa.purposeManagementModels   % Compile,
       pagopa.commonsUtils              % "compile,it",
       pagopa.commonsJWT                % Compile,

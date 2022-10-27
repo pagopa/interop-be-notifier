@@ -10,6 +10,7 @@ import it.pagopa.interop.notifier.model.{MessageId, NotificationMessage}
 import it.pagopa.interop.notifier.service.CatalogManagementService
 import it.pagopa.interop.notifier.service.converters.{
   AgreementEventsConverter,
+  CatalogEventsConverter,
   PurposeEventsConverter,
   notFoundRecipient
 }
@@ -59,11 +60,14 @@ final class QueueHandler(
     event: ProjectableEvent,
     dynamoIndexService: DynamoNotificationResourcesService
   )(implicit scanamo: ScanamoAsync, contexts: Seq[(String, String)]): Future[MessageId] = {
-    val composedGetters: PartialFunction[ProjectableEvent, Future[MessageId]] =
-      PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse AgreementEventsConverter
-        .getMessageId(dynamoIndexService) orElse notFoundRecipient
+    val composed: PartialFunction[ProjectableEvent, Future[MessageId]] = {
+      PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse
+        AgreementEventsConverter.getMessageId(dynamoIndexService) orElse
+        CatalogEventsConverter.getMessageId(dynamoIndexService) orElse
+        notFoundRecipient
+    }
 
-    composedGetters(event)
+    composed(event)
   }
 
 }

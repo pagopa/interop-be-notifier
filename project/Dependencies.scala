@@ -97,7 +97,7 @@ object Dependencies {
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
 
     lazy val catalogManagementModels =
-      namespace %% "interop-be-catalog-management-models" % "pin-1856-SNAPSHOT"
+      namespace %% "interop-be-catalog-management-models" % catalogManagementVersion
     lazy val agreementManagementModels =
       namespace %% "interop-be-agreement-management-models" % agreementManagementVersion
     lazy val purposeManagementModels =

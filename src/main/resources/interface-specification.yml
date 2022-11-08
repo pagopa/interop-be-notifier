@@ -70,12 +70,59 @@ paths:
             minimum: 1
             maximum: 500
             default: 100
-        - name: fromAllOrganizations
+      responses:
+        '200':
+          description: Events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Events'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Institution not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/all/events':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - events
+      summary: Get list of events from all organizations partition
+      description: Retrieves the list of events from all organizations partition
+      operationId: getAllEventsFromId
+      parameters:
+        - name: lastEventId
           in: query
-          description: if true search in all organizations partition, otherwise in single organization one
+          description: returns organization events starting from this last received id
+          required: true
           schema:
-            type: boolean
-            default: false
+            type: integer
+            format: int64
+            default: 0
+        - name: limit
+          in: query
+          description: the number of events returned by this response
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+            default: 100
       responses:
         '200':
           description: Events

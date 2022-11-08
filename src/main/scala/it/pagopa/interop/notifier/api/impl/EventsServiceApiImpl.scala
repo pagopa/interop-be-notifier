@@ -43,7 +43,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
       route
     }
 
-  override def getEventsFromId(lastEventId: Long, limit: Int, fromAllOrganizations: Boolean)(implicit
+  override def getEventsFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -52,9 +52,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
 
     val result: Future[Events] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
-      dynamoMessages <-
-        if (fromAllOrganizations) dynamoNotificationService.get(limit)(organizationId.toString, lastEventId)
-        else dynamoNotificationService.get(limit)(allOrganizations, lastEventId)
+      dynamoMessages <- dynamoNotificationService.get(limit)(organizationId.toString, lastEventId)
       lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
       messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
     } yield messages
@@ -67,6 +65,30 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
         val problem = problemOf(StatusCodes.NotFound, ex)
         getEventsFromId404(problem)
       case Failure(ex) => internalServerError(s"Error while getting events - ${ex.getMessage}")
+    }
+  }
+
+  override def getAllEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize(M2M_ROLE) {
+    logger.info(s"Retrieving all organizations events $limit messages from id $lastEventId")
+
+    val result: Future[Events] = for {
+      dynamoMessages <- dynamoNotificationService.get(limit)(allOrganizations, lastEventId)
+      lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
+      messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
+    } yield messages
+
+    onComplete(result) {
+      case Success(messages)                                         =>
+        getEventsFromId200(messages)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while retrieving all organizations events, not found")
+        val problem = problemOf(StatusCodes.NotFound, ex)
+        getEventsFromId404(problem)
+      case Failure(ex) => internalServerError(s"Error while getting all organizations events - ${ex.getMessage}")
     }
   }
 

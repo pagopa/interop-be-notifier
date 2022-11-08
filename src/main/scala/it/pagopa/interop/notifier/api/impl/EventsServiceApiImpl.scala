@@ -13,6 +13,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationFo
 import it.pagopa.interop.notifier.api.EventsApiService
 import it.pagopa.interop.notifier.error.NotifierErrors.InternalServerError
 import it.pagopa.interop.notifier.model._
+import it.pagopa.interop.notifier.service.converters.allOrganizations
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 import org.scanamo.ScanamoAsync
 
@@ -42,13 +43,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
       route
     }
 
-  /**
-    * Code: 200, Message: Messages, DataType: Messages
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Events not found, DataType: Problem
-    */
-  override def getEventsFromId(lastEventId: Long, limit: Int)(implicit
+  override def getEventsFromId(lastEventId: Long, limit: Int, fromAllOrganizations: Boolean)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -57,7 +52,9 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
 
     val result: Future[Events] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
-      dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
+      dynamoMessages <-
+        if (fromAllOrganizations) dynamoNotificationService.get(limit)(organizationId.toString, lastEventId)
+        else dynamoNotificationService.get(limit)(allOrganizations, lastEventId)
       lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
       messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
     } yield messages

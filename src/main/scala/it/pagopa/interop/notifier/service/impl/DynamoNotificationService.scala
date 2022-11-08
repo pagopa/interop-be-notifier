@@ -12,7 +12,6 @@ import org.scanamo._
 import org.scanamo.ops.ScanamoOps
 import org.scanamo.syntax._
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 object DynamoNotificationService extends DynamoNotificationService
@@ -27,7 +26,7 @@ trait DynamoNotificationService {
   def put(message: NotificationMessage)(implicit scanamo: ScanamoAsync): Future[Unit] =
     scanamo.exec(messages.put(message))
 
-  def get(limit: Int)(organizationId: UUID, eventId: Long)(implicit
+  def get(limit: Int)(organizationId: String, eventId: Long)(implicit
     scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]

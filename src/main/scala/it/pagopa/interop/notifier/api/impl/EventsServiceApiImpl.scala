@@ -13,6 +13,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationFo
 import it.pagopa.interop.notifier.api.EventsApiService
 import it.pagopa.interop.notifier.error.NotifierErrors.InternalServerError
 import it.pagopa.interop.notifier.model._
+import it.pagopa.interop.notifier.service.converters.allOrganizations
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 import org.scanamo.ScanamoAsync
 
@@ -42,12 +43,6 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
       route
     }
 
-  /**
-    * Code: 200, Message: Messages, DataType: Messages
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Events not found, DataType: Problem
-    */
   override def getEventsFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
@@ -57,10 +52,8 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
 
     val result: Future[Events] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
-      dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
-      lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
-      messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
-    } yield messages
+      events         <- getEvents(organizationId.toString, limit, lastEventId)
+    } yield events
 
     onComplete(result) {
       case Success(messages)                                         =>
@@ -72,6 +65,34 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
       case Failure(ex) => internalServerError(s"Error while getting events - ${ex.getMessage}")
     }
   }
+
+  override def getAllEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize(M2M_ROLE) {
+    logger.info(s"Retrieving all organizations events $limit messages from id $lastEventId")
+
+    val result: Future[Events] = getEvents(allOrganizations, limit, lastEventId)
+
+    onComplete(result) {
+      case Success(messages)                                         =>
+        getEventsFromId200(messages)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while retrieving all organizations events, not found")
+        val problem = problemOf(StatusCodes.NotFound, ex)
+        getEventsFromId404(problem)
+      case Failure(ex) => internalServerError(s"Error while getting all organizations events - ${ex.getMessage}")
+    }
+  }
+
+  private def getEvents(organizationId: String, limit: Int, lastEventId: Long)(implicit
+    context: Seq[(String, String)]
+  ): Future[Events] = for {
+    dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
+    lastId = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
+    events = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
+  } yield events
 
   private[this] def dynamoPayloadToEvent(message: NotificationMessage): Event =
     Event(

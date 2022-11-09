@@ -88,13 +88,11 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
 
   private def getEvents(organizationId: String, limit: Int, lastEventId: Long)(implicit
     context: Seq[(String, String)]
-  ): Future[Events] = {
-    for {
-      dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
-      lastId = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
-      events = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
-    } yield events
-  }
+  ): Future[Events] = for {
+    dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
+    lastId = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
+    events = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
+  } yield events
 
   private[this] def dynamoPayloadToEvent(message: NotificationMessage): Event =
     Event(

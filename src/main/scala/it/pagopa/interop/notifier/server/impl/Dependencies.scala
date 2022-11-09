@@ -13,6 +13,7 @@ import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
+import it.pagopa.interop.catalogmanagement.model.persistence.CatalogEventsSerde.jsonToCatalog
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
@@ -46,7 +47,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 trait Dependencies {
 
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
-    jsonToPurpose orElse jsonToAgreement
+    jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog
   }
 
   def getJwtReader(): Future[JWTReader] = JWTConfiguration.jwtReader

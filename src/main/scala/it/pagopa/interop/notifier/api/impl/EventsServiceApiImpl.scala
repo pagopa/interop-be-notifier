@@ -52,10 +52,8 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
 
     val result: Future[Events] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
-      dynamoMessages <- dynamoNotificationService.get(limit)(organizationId.toString, lastEventId)
-      lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
-      messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
-    } yield messages
+      events         <- getEvents(organizationId.toString, limit, lastEventId)
+    } yield events
 
     onComplete(result) {
       case Success(messages)                                         =>
@@ -75,11 +73,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
   ): Route = authorize(M2M_ROLE) {
     logger.info(s"Retrieving all organizations events $limit messages from id $lastEventId")
 
-    val result: Future[Events] = for {
-      dynamoMessages <- dynamoNotificationService.get(limit)(allOrganizations, lastEventId)
-      lastId   = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
-      messages = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
-    } yield messages
+    val result: Future[Events] = getEvents(allOrganizations, limit, lastEventId)
 
     onComplete(result) {
       case Success(messages)                                         =>
@@ -90,6 +84,16 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
         getEventsFromId404(problem)
       case Failure(ex) => internalServerError(s"Error while getting all organizations events - ${ex.getMessage}")
     }
+  }
+
+  private def getEvents(organizationId: String, limit: Int, lastEventId: Long)(implicit
+    context: Seq[(String, String)]
+  ): Future[Events] = {
+    for {
+      dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
+      lastId = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
+      events = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
+    } yield events
   }
 
   private[this] def dynamoPayloadToEvent(message: NotificationMessage): Event =

@@ -22,17 +22,17 @@ import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.OpenapiUtils
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.{Problem => CommonProblem}
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
   HealthApiMarshallerImpl,
-  HealthServiceApiImpl,
-  entityMarshallerProblem,
-  problemOf
+  HealthServiceApiImpl
 }
 import it.pagopa.interop.notifier.api.{EventsApi, HealthApi}
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.{numberOfProjectionTags, projectionTag}
+import it.pagopa.interop.notifier.error.Handlers.serviceCode
 import it.pagopa.interop.notifier.model.persistence.projection.NotifierCqrsProjection
 import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotificationEventIdBehavior}
 import it.pagopa.interop.notifier.service._
@@ -102,8 +102,8 @@ trait Dependencies {
 
   val validationExceptionToRoute: ValidationReport => Route = report => {
     val error =
-      problemOf(StatusCodes.BadRequest, OpenapiUtils.errorFromRequestValidationReport(report))
-    complete(error.status, error)(entityMarshallerProblem)
+      CommonProblem(StatusCodes.BadRequest, OpenapiUtils.errorFromRequestValidationReport(report), serviceCode)
+    complete(error.status, error)
   }
 
   val healthApi: HealthApi = new HealthApi(

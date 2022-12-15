@@ -62,7 +62,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     context: Seq[(String, String)]
   ): Future[Events] = for {
     dynamoMessages <- dynamoNotificationService.get(limit)(organizationId, lastEventId)
-    lastId = Option.when(dynamoMessages.nonEmpty)(dynamoMessages.last.eventId)
+    lastId = dynamoMessages.lastOption.map(_.eventId)
     events = Events(lastEventId = lastId, events = dynamoMessages.map(dynamoPayloadToEvent))
   } yield events
 

@@ -14,16 +14,14 @@ object Handlers extends AkkaResponses {
   def handleGetEventsFromIdError(logMessage: String)(implicit
     contexts: Seq[(String, String)],
     logger: LoggerTakingImplicit[ContextFieldsToLog]
-  ): PartialFunction[Try[_], StandardRoute] = {
-    case Failure(ex: GenericComponentErrors.ResourceNotFoundError) => notFound(ex, logMessage)
-    case Failure(ex)                                               => internalServerError(ex, logMessage)
+  ): PartialFunction[Try[_], StandardRoute] = { case Failure(ex) =>
+    internalServerError(ex, logMessage)
   }
 
   def handleGetAllEventsFromIdError(logMessage: String)(implicit
     contexts: Seq[(String, String)],
     logger: LoggerTakingImplicit[ContextFieldsToLog]
-  ): PartialFunction[Try[_], StandardRoute] = {
-    case Failure(ex: GenericComponentErrors.ResourceNotFoundError) => notFound(ex, logMessage)
-    case Failure(ex)                                               => internalServerError(ex, logMessage)
+  ): PartialFunction[Try[_], StandardRoute] = { case Failure(ex) =>
+    internalServerError(ex, logMessage)
   }
 }

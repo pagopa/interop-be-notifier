@@ -8,14 +8,13 @@ import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.notifier.api.EventsApiService
-import it.pagopa.interop.notifier.error.Handlers._
+import it.pagopa.interop.notifier.api.impl.ResponseHandlers._
 import it.pagopa.interop.notifier.model._
 import it.pagopa.interop.notifier.service.converters.allOrganizations
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 import org.scanamo.ScanamoAsync
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
 
 final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationService)(implicit
   scanamo: ScanamoAsync,
@@ -39,7 +38,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     } yield events
 
     onComplete(result) {
-      handleGetEventsFromIdError(operationLabel) orElse { case Success(messages) => getEventsFromId200(messages) }
+      getEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)
     }
   }
 
@@ -54,7 +53,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     val result: Future[Events] = getEvents(allOrganizations, limit, lastEventId)
 
     onComplete(result) {
-      handleGetAllEventsFromIdError(operationLabel) orElse { case Success(messages) => getEventsFromId200(messages) }
+      getAllEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)
     }
   }
 

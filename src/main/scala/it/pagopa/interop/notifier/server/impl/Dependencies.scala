@@ -32,7 +32,7 @@ import it.pagopa.interop.notifier.api.impl.{
 import it.pagopa.interop.notifier.api.{EventsApi, HealthApi}
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.{numberOfProjectionTags, projectionTag}
-import it.pagopa.interop.notifier.error.Handlers.serviceCode
+import it.pagopa.interop.notifier.api.impl.ResponseHandlers.serviceCode
 import it.pagopa.interop.notifier.model.persistence.projection.NotifierCqrsProjection
 import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotificationEventIdBehavior}
 import it.pagopa.interop.notifier.service._

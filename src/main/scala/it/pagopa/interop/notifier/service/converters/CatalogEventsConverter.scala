@@ -26,20 +26,20 @@ object CatalogEventsConverter {
     contexts: Seq[(String, String)]
   ): Future[MessageId] =
     event match {
-      case CatalogItemAdded(c)                     =>
+      case CatalogItemAdded(c)                        =>
         val messageId: MessageId = MessageId(c.id, allOrganizations)
         dynamoService.put(messageId).map(_ => messageId)
-      case ClonedCatalogItemAdded(c)               =>
+      case ClonedCatalogItemAdded(c)                  =>
         val messageId: MessageId = MessageId(c.id, allOrganizations)
         dynamoService.put(messageId).map(_ => messageId)
-      case CatalogItemUpdated(c)                   => Future.successful(MessageId(c.id, allOrganizations))
-      case CatalogItemWithDescriptorsDeleted(c, _) => Future.successful(MessageId(c.id, allOrganizations))
-      case CatalogItemDocumentUpdated(id, _, _, _) => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDeleted(id)                  => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDocumentAdded(id, _, _, _)   => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDocumentDeleted(id, _, _)    => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDescriptorAdded(id, _)       => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDescriptorUpdated(id, _)     => getMessageIdFromDynamo(dynamoService)(id)
+      case CatalogItemUpdated(c)                      => Future.successful(MessageId(c.id, allOrganizations))
+      case CatalogItemWithDescriptorsDeleted(c, _)    => Future.successful(MessageId(c.id, allOrganizations))
+      case CatalogItemDocumentUpdated(id, _, _, _, _) => getMessageIdFromDynamo(dynamoService)(id)
+      case CatalogItemDeleted(id)                     => getMessageIdFromDynamo(dynamoService)(id)
+      case CatalogItemDocumentAdded(id, _, _, _, _)   => getMessageIdFromDynamo(dynamoService)(id)
+      case CatalogItemDocumentDeleted(id, _, _)       => getMessageIdFromDynamo(dynamoService)(id)
+      case CatalogItemDescriptorAdded(id, _)          => getMessageIdFromDynamo(dynamoService)(id)
+      case CatalogItemDescriptorUpdated(id, _)        => getMessageIdFromDynamo(dynamoService)(id)
     }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] = {
@@ -49,22 +49,22 @@ object CatalogEventsConverter {
 
   private[this] def getEventNotificationPayload(event: Event): NotificationPayload = {
     event match {
-      case CatalogItemAdded(catalogItem)       => EServicePayload(catalogItem.id.toString(), None, ADDED.toString())
-      case ClonedCatalogItemAdded(catalogItem) => EServicePayload(catalogItem.id.toString(), None, CLONED.toString())
-      case CatalogItemUpdated(catalogItem)     => EServicePayload(catalogItem.id.toString(), None, UPDATED.toString())
-      case CatalogItemWithDescriptorsDeleted(catalogItem, descriptorId) =>
-        EServicePayload(catalogItem.id.toString(), Some(descriptorId), DELETED.toString())
-      case CatalogItemDocumentUpdated(eServiceId, descriptorId, _, _)   =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString())
-      case CatalogItemDeleted(catalogItemId) => EServicePayload(catalogItemId, None, DELETED.toString())
-      case CatalogItemDocumentAdded(eServiceId, descriptorId, _, _)    =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString())
+      case CatalogItemAdded(catalogItem)       => EServicePayload(catalogItem.id.toString, None, ADDED.toString)
+      case ClonedCatalogItemAdded(catalogItem) => EServicePayload(catalogItem.id.toString, None, CLONED.toString)
+      case CatalogItemUpdated(catalogItem)     => EServicePayload(catalogItem.id.toString, None, UPDATED.toString)
+      case CatalogItemWithDescriptorsDeleted(catalogItem, descriptorId)  =>
+        EServicePayload(catalogItem.id.toString, Some(descriptorId), DELETED.toString)
+      case CatalogItemDocumentUpdated(eServiceId, descriptorId, _, _, _) =>
+        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString)
+      case CatalogItemDeleted(catalogItemId) => EServicePayload(catalogItemId, None, DELETED.toString)
+      case CatalogItemDocumentAdded(eServiceId, descriptorId, _, _, _) =>
+        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString)
       case CatalogItemDocumentDeleted(eServiceId, descriptorId, _)     =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString())
+        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString)
       case CatalogItemDescriptorAdded(eServiceId, catalogDescriptor)   =>
-        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString()), ADDED.toString())
+        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), ADDED.toString)
       case CatalogItemDescriptorUpdated(eServiceId, catalogDescriptor) =>
-        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString()), UPDATED.toString())
+        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), UPDATED.toString)
     }
 
   }

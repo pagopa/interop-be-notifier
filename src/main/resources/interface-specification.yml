@@ -89,12 +89,6 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '404':
-          description: Institution not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
   '/all/events':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -138,12 +132,6 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '401':
           description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Institution not found
           content:
             application/problem+json:
               schema:

@@ -12,17 +12,20 @@ import akka.projection.ProjectionBehavior
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
 import it.pagopa.interop.catalogmanagement.model.persistence.CatalogEventsSerde.jsonToCatalog
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultInteropTokenGenerator, DefaultJWTReader, getClaimsVerifier}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.queue.QueueReader
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.OpenapiUtils
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.{Problem => CommonProblem}
+import it.pagopa.interop.notifier.api.impl.ResponseHandlers.serviceCode
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
@@ -32,7 +35,6 @@ import it.pagopa.interop.notifier.api.impl.{
 import it.pagopa.interop.notifier.api.{EventsApi, HealthApi}
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.{numberOfProjectionTags, projectionTag}
-import it.pagopa.interop.notifier.api.impl.ResponseHandlers.serviceCode
 import it.pagopa.interop.notifier.model.persistence.projection.NotifierCqrsProjection
 import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotificationEventIdBehavior}
 import it.pagopa.interop.notifier.service._
@@ -45,6 +47,9 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
+
+  implicit val loggerTI: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts")
 
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
     jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog

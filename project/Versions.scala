@@ -16,7 +16,7 @@ object Versions {
   lazy val s3Persistence               = "1.2.157"
   lazy val scalaMockVersion            = "5.2.0"
   lazy val scalapbVersion              = "0.11.1"
-  lazy val scalatestVersion            = "3.2.14"
+  lazy val scalatestVersion            = "3.2.15"
   lazy val scanamoVersion              = "1.0.0-M20"
   lazy val slickProjectionVersion      = "1.2.5"
   lazy val testcontainersScalaVersion  = "0.40.14"

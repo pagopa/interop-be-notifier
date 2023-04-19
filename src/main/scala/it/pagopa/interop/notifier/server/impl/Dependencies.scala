@@ -55,7 +55,7 @@ trait Dependencies {
   // import it.pagopa.interop.authorizationmanagement.model.persistence.SomethingSerde.jsonToAuth
 
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
-    jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog
+    jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog orElse // mettere il deser dei json dell'auth mgmt
   }
 
   def getJwtReader(): Future[JWTReader] = JWTConfiguration.jwtReader

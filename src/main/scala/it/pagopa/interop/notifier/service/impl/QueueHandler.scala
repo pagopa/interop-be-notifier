@@ -45,13 +45,12 @@ final class QueueHandler(
       .orElse(postgreFlow(contexts))
       .applyOrElse(message, notFoundRecipient)
 
-  // TODO? querare per orgId l'auth mgmt
+  // TODO
+
   private def postgreFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = _ => { _: Message =>
-    // TODO usa slick e crea un DAO di cui fare il wiring nell'endpoint
-    import slick.jdbc.PostgresProfile.api._
-    val db         = Database.forConfig("postgres")
-    val plainQuery = sql"select SUP_NAME from SUPPLIERS where STATE = 'ARGH'".as[String]
-    db.run(plainQuery)
+    // TODO creare la tabella e salvare lo statement di create da qualche parte
+    // Partial Function su ProjectableEvent deve diventare partial function su message
+    // TODO m:Message => pf(m.payload): PF[Message, Future[Unit]]
 
     Future.unit
   }

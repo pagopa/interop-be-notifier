@@ -25,7 +25,6 @@ import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.OpenapiUtils
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.{Problem => CommonProblem}
-import it.pagopa.interop.notifier.api.impl.ResponseHandlers.serviceCode
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
@@ -40,16 +39,20 @@ import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotifi
 import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
-import org.scanamo.ScanamoAsync
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import it.pagopa.interop.commons.utils.errors.ServiceCode
 
 trait Dependencies {
 
+  implicit val serviceCode: ServiceCode = ServiceCode("017")
+
   implicit val loggerTI: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts")
+
+  // import it.pagopa.interop.authorizationmanagement.model.persistence.SomethingSerde.jsonToAuth
 
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
     jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog
@@ -66,11 +69,12 @@ trait Dependencies {
     )
     .toFuture
 
-  def initProjections()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): Unit = {
+  def initProjections()(implicit actorSystem: ActorSystem[_]): Unit = {
     val dbConfig: DatabaseConfig[JdbcProfile] =
       DatabaseConfig.forConfig("akka-persistence-jdbc.shared-databases.slick")
 
-    val mongoDbConfig = ApplicationConfiguration.mongoDb
+    implicit val ec: ExecutionContext = actorSystem.executionContext
+    val mongoDbConfig                 = ApplicationConfiguration.mongoDb
 
     val projectionId   = "notifier-cqrs-projections"
     val cqrsProjection = NotifierCqrsProjection.projection(dbConfig, mongoDbConfig, projectionId)
@@ -96,14 +100,12 @@ trait Dependencies {
     Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
   def eventsApi(dynamoNotificationService: DynamoNotificationService, jwtReader: JWTReader)(implicit
-    ec: ExecutionContext,
-    scanamo: ScanamoAsync
-  ): EventsApi =
-    new EventsApi(
-      new EventsServiceApiImpl(dynamoNotificationService),
-      EventsApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
-    )
+    ec: ExecutionContext
+  ): EventsApi = new EventsApi(
+    new EventsServiceApiImpl(dynamoNotificationService),
+    EventsApiMarshallerImpl,
+    jwtReader.OAuth2JWTValidatorAsContexts
+  )
 
   val validationExceptionToRoute: ValidationReport => Route = report => {
     val error =

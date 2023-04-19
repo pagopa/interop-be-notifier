@@ -47,5 +47,4 @@ object NotificationMessage {
           payload = payload
         )
       )
-
 }

@@ -7,7 +7,6 @@ import it.pagopa.interop.notifier.service.CatalogManagementService
 import it.pagopa.interop.notifier.service.converters.EventType._
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import it.pagopa.interop.purposemanagement.model.persistence._
-import org.scanamo.ScanamoAsync
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -16,7 +15,6 @@ object PurposeEventsConverter {
     catalogManagementService: CatalogManagementService,
     dynamoIndexService: DynamoNotificationResourcesService
   )(implicit
-    scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): PartialFunction[ProjectableEvent, Future[MessageId]] = { case e: Event =>
@@ -27,7 +25,7 @@ object PurposeEventsConverter {
     catalogManagementService: CatalogManagementService,
     dynamoIndexService: DynamoNotificationResourcesService,
     event: Event
-  )(implicit scanamo: ScanamoAsync, ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] =
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[MessageId] =
     event match {
       case PurposeCreated(purpose)                  =>
         for {

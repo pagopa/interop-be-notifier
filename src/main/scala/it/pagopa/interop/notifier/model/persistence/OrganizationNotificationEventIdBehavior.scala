@@ -33,32 +33,27 @@ object OrganizationNotificationEventIdBehavior {
     }
   }
 
-  val eventHandler: (State, Event) => State =
-    (state, event) =>
-      event match {
-        case EventIdAdded(client, nextId) => state.increaseEventId(client, nextId)
-      }
+  val eventHandler: (State, Event) => State = (state, event) =>
+    event match {
+      case EventIdAdded(client, nextId) => state.increaseEventId(client, nextId)
+    }
 
-  val TypeKey: EntityTypeKey[Command] =
-    EntityTypeKey[Command]("interop-be-notifier-notification-id-persistence")
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("interop-be-notifier-notification-id-persistence")
 
   def apply(
     shard: ActorRef[ClusterSharding.ShardCommand],
     persistenceId: PersistenceId,
     projectionTag: String
-  ): Behavior[Command] = {
-    Behaviors.setup { context =>
-      context.log.info(s"Starting Key Shard ${persistenceId.id}")
-      val numberOfEvents =
-        context.system.settings.config.getInt("notifier.number-of-events-before-snapshot")
-      EventSourcedBehavior[Command, Event, State](
-        persistenceId = persistenceId,
-        emptyState = State.empty,
-        commandHandler = commandHandler(shard, context),
-        eventHandler = eventHandler
-      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = numberOfEvents, keepNSnapshots = 1))
-        .withTagger(_ => Set(projectionTag))
-        .onPersistFailure(SupervisorStrategy.restartWithBackoff(200 millis, 5 seconds, 0.1))
-    }
+  ): Behavior[Command] = Behaviors.setup { context =>
+    context.log.info(s"Starting Key Shard ${persistenceId.id}")
+    val numberOfEvents = context.system.settings.config.getInt("notifier.number-of-events-before-snapshot")
+    EventSourcedBehavior[Command, Event, State](
+      persistenceId = persistenceId,
+      emptyState = State.empty,
+      commandHandler = commandHandler(shard, context),
+      eventHandler = eventHandler
+    ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = numberOfEvents, keepNSnapshots = 1))
+      .withTagger(_ => Set(projectionTag))
+      .onPersistFailure(SupervisorStrategy.restartWithBackoff(200 millis, 5 seconds, 0.1))
   }
 }

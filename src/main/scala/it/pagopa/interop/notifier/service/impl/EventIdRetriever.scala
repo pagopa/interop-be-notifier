@@ -5,7 +5,7 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityRef}
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.notifier.common.system.timeout
+import scala.concurrent.duration.DurationInt
 import it.pagopa.interop.notifier.error.NotifierErrors.OrganizationNotFound
 import it.pagopa.interop.notifier.model.persistence.{
   Command,
@@ -29,9 +29,6 @@ final class EventIdRetriever(
 
   @inline private def getShard(id: String): String = (math.abs(id.hashCode) % settings.numberOfShards).toString
 
-  /** Code: 201, Message: Attribute created, DataType: Attribute
-    * Code: 400, Message: Bad Request, DataType: Problem
-    */
   def getNextEventIdForOrganization(
     organizationId: String
   )(implicit contexts: Seq[(String, String)]): Future[PersistentOrganizationEvent] = {
@@ -40,7 +37,7 @@ final class EventIdRetriever(
     val commander: EntityRef[Command] =
       sharding.entityRefFor(OrganizationNotificationEventIdBehavior.TypeKey, getShard(organizationId))
 
-    commander.ask(ref => UpdateOrganizationNotificationEventId(organizationId, ref)).flatMap {
+    commander.ask(ref => UpdateOrganizationNotificationEventId(organizationId, ref))(300.seconds).flatMap {
       case Some(res) => Future.successful(res)
       case None      => Future.failed(OrganizationNotFound(organizationId))
     }

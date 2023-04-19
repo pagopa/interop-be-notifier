@@ -20,6 +20,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 import it.pagopa.interop.agreementmanagement.model.agreement.PersistentStamps
 
+import it.pagopa.interop.notifier.service.converters.AgreementEventsConverter
 class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with ScalaFutures {
 
   "Agreement conversions" should {

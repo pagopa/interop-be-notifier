@@ -14,21 +14,18 @@ import org.scanamo.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object DynamoNotificationResourcesService extends DynamoNotificationResourcesService
-trait DynamoNotificationResourcesService {
+class DynamoNotificationResourcesService(scanamo: ScanamoAsync) {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   val messageIds: Table[MessageId] = Table[MessageId](ApplicationConfiguration.dynamoNotificationResourcesTableName)
 
-  def put(messageId: MessageId)(implicit scanamo: ScanamoAsync): Future[Unit] = scanamo.exec(messageIds.put(messageId))
+  def put(messageId: MessageId): Future[Unit] = scanamo.exec(messageIds.put(messageId))
 
-  def getOne(resourceId: String)(implicit
-    scanamo: ScanamoAsync,
-    ec: ExecutionContext,
-    contexts: Seq[(String, String)]
-  ): Future[Option[MessageId]] = {
+  def getOne(
+    resourceId: String
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[Option[MessageId]] = {
     logger.debug(s"Getting messageId using resourceId=$resourceId")
     val operations: ScanamoOps[Option[Either[DynamoReadError, MessageId]]] =
       messageIds.get("resourceId" === resourceId)

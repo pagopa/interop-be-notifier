@@ -28,8 +28,7 @@ class StateSerializer extends SerializerWithStringManifest {
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef =
     manifest.split('|').toList match {
-      case `className` :: `version1` :: Nil =>
-        deserialize(v1.state.StateV1, bytes, manifest, currentVersion)
+      case `className` :: `version1` :: Nil => deserialize(v1.state.StateV1, bytes, manifest, currentVersion)
       case _                                =>
         throw new NotSerializableException(
           s"Unable to handle manifest: [[$manifest]], currentVersion: [[$currentVersion]] "

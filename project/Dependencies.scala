@@ -102,6 +102,8 @@ object Dependencies {
       namespace %% "interop-be-agreement-management-models" % agreementManagementVersion
     lazy val purposeManagementModels =
       namespace %% "interop-be-purpose-management-models" % purposeManagementVersion
+    lazy val authManagementModels =
+      namespace %% "interop-be-authorization-management-models" % authManagementVersion
     lazy val commonsUtils = namespace %% "interop-commons-utils"         % commonsVersion
     lazy val commonsJWT   = namespace %% "interop-commons-jwt"           % commonsVersion
     lazy val commonsCqrs  = namespace %% "interop-commons-cqrs"          % commonsVersion
@@ -150,6 +152,7 @@ object Dependencies {
       pagopa.catalogManagementClient   % Compile,
       pagopa.catalogManagementModels   % Compile,
       pagopa.purposeManagementModels   % Compile,
+      pagopa.authManagementModels      % Compile,
       pagopa.commonsUtils              % "compile,it",
       pagopa.commonsJWT                % Compile,
       pagopa.commonsCqrs               % "compile,it",
@@ -162,6 +165,7 @@ object Dependencies {
       scalamock.core                   % "test,it",
       akka.testkit                     % "test,it",
       akka.httpTestkit                 % "test,it",
+      "com.typesafe.slick"            %% "slick"                          % "3.3.3"                    % Compile,
       "org.scalameta"                 %% "munit-scalacheck"               % "0.7.29"                   % Test,
       "com.softwaremill.diffx"        %% "diffx-munit"                    % "0.7.1"                    % Test,
       "com.dimafeng"                  %% "testcontainers-scala-scalatest" % testcontainersScalaVersion % IntegrationTest

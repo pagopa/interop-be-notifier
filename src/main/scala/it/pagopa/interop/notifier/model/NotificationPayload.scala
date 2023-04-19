@@ -2,12 +2,8 @@ package it.pagopa.interop.notifier.model
 
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.service.converters.{
-  AgreementEventsConverter,
-  CatalogEventsConverter,
-  PurposeEventsConverter,
-  notFoundPayload
-}
+import it.pagopa.interop.notifier.service.converters.{CatalogEventsConverter, PurposeEventsConverter, notFoundPayload}
+import it.pagopa.interop.notifier.service.converters.AgreementEventsConverter
 
 object NotificationPayload {
   def create(event: ProjectableEvent): Either[ComponentError, NotificationPayload] = {
@@ -18,7 +14,6 @@ object NotificationPayload {
         notFoundPayload
     composed(event)
   }
-
 }
 
 sealed trait NotificationPayload {
@@ -40,10 +35,17 @@ sealed trait NotificationPayload {
 
 }
 
+case object NoOp extends NotificationPayload {
+  val objectType: String            = ""
+  val eventType: String             = ""
+  val objectId: Map[String, String] = Map.empty[String, String]
+}
+
 final case class PurposePayload(purposeId: String, eventType: String, objectType: String = "PURPOSE")
     extends NotificationPayload {
   override val objectId: Map[String, String] = Map("purposeId" -> purposeId)
 }
+
 final case class AgreementPayload(agreementId: String, eventType: String, objectType: String = "AGREEMENT")
     extends NotificationPayload {
   override val objectId: Map[String, String] = Map("agreementId" -> agreementId)
@@ -57,4 +59,15 @@ final case class EServicePayload(
 ) extends NotificationPayload {
   override val objectId: Map[String, String] =
     Map("eServiceId" -> eServiceId) ++ descriptorId.fold(Map.empty[String, String])(d => Map("descriptorId" -> d))
+}
+
+final case class AuthorizationPayload(
+  clientId: String,
+  kid: String,
+  eventType: String,
+  objectType: String = "AUTHORIZATION"
+) extends NotificationPayload {
+  // su dynamo salviamo solo il kid o tutto l'evento?
+  // nella notifica mettiamo solo il kid?
+  val objectId: Map[String, String] = Map("clientId" -> clientId, "kid" -> kid)
 }

@@ -20,8 +20,7 @@ import it.pagopa.interop.notifier.service.impl._
 import org.scanamo.ScanamoAsync
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
-import java.util.concurrent.Executors
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 object Main extends App with CORSSupport with Dependencies {
@@ -32,10 +31,14 @@ object Main extends App with CORSSupport with Dependencies {
     Behaviors.setup[Nothing] { context =>
       implicit val actorSystem: ActorSystem[Nothing]          = context.system
       implicit val executionContext: ExecutionContextExecutor = actorSystem.executionContext
-      implicit val scanamo: ScanamoAsync                      = ScanamoAsync(DynamoDbAsyncClient.create())
 
       val selector: DispatcherSelector         = DispatcherSelector.fromConfig("futures-dispatcher")
       val blockingEc: ExecutionContextExecutor = actorSystem.dispatchers.lookup(selector)
+
+      val (dynamoNotificationService, dynamoIndexService) = {
+        val scanamo = ScanamoAsync(DynamoDbAsyncClient.create())(blockingEc)
+        (new DynamoNotificationService(scanamo), new DynamoNotificationResourcesService(scanamo))
+      }
 
       AkkaManagement.get(actorSystem.classicSystem).start()
 
@@ -63,25 +66,20 @@ object Main extends App with CORSSupport with Dependencies {
       val handler: QueueHandler = new QueueHandler(
         interopTokenGenerator = interopTokenGenerator(blockingEc),
         idRetriever = eventIdRetriever(sharding),
-        dynamoNotificationService = DynamoNotificationService,
-        dynamoIndexService = DynamoNotificationResourcesService,
+        dynamoNotificationService = dynamoNotificationService,
+        dynamoIndexService = dynamoIndexService,
         catalogManagementService = catalogManagementService(blockingEc)
       )
 
-      val readerExecutionContext: ExecutionContextExecutor =
-        ExecutionContext.fromExecutor(Executors.newFixedThreadPool(ApplicationConfiguration.threadPoolSize))
-
-      val queueReader: QueueReader = sqsReader()(readerExecutionContext)
+      val queueReader: QueueReader = sqsReader()(blockingEc)
 
       val serverBinding: Future[Http.ServerBinding] = for {
         jwtReader <- getJwtReader()
-        dynamo     = DynamoNotificationService
+        dynamo     = dynamoNotificationService
         events     = eventsApi(dynamo, jwtReader)
         controller = new Controller(events, healthApi, validationExceptionToRoute.some)(actorSystem.classicSystem)
         binding <- Http().newServerAt("0.0.0.0", ApplicationConfiguration.serverPort).bind(controller.routes)
       } yield binding
-
-      val queueHandling: Future[Unit] = queueReader.handle(handler.processMessage)
 
       serverBinding.onComplete {
         case Success(b) =>
@@ -91,7 +89,7 @@ object Main extends App with CORSSupport with Dependencies {
           logger.error("Startup error: ", e)
       }
 
-      queueHandling.onComplete {
+      queueReader.handle(handler.processMessage).onComplete {
         case Success(_) =>
           logger.error(s"SQSQueue handling somehow finished, and this should not have happened.")
         case Failure(e) =>

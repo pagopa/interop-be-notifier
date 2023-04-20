@@ -55,8 +55,8 @@ final class QueueHandler(
     Future.unit
   }
 
-  private def dynamoFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = contexts => {
-    msg: Message =>
+  private def dynamoFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = contexts =>
+    Function.unlift({ msg: Message =>
       implicit val ctx: Seq[(String, String)] = contexts
 
       val getMessageId: PartialFunction[ProjectableEvent, Future[MessageId]] =
@@ -79,7 +79,7 @@ final class QueueHandler(
           } yield ()
         )
 
-      flow(msg.payload)
-  }
+      flow.lift(msg.payload)
+    })
 
 }

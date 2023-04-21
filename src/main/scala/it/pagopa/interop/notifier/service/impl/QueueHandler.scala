@@ -7,23 +7,24 @@ import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER}
 import it.pagopa.interop.notifier.model.{MessageId, NotificationMessage}
-import it.pagopa.interop.notifier.service.CatalogManagementService
+import it.pagopa.interop.notifier.service.{AuthorizationEventsHandler, CatalogManagementService}
 import it.pagopa.interop.notifier.service.converters.{
   AgreementEventsConverter,
   CatalogEventsConverter,
-  PurposeEventsConverter
+  PurposeEventsConverter,
+  notFoundRecipient
 }
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import it.pagopa.interop.notifier.service.converters.notFoundRecipient
 
 final class QueueHandler(
   interopTokenGenerator: InteropTokenGenerator,
   idRetriever: EventIdRetriever,
   dynamoNotificationService: DynamoNotificationService,
   dynamoIndexService: DynamoNotificationResourcesService,
-  catalogManagementService: CatalogManagementService
+  catalogManagementService: CatalogManagementService,
+  authorizationEventsHandler: AuthorizationEventsHandler
 )(implicit ec: ExecutionContext) {
 
   lazy val jwtConfig: JWTInternalTokenConfig = JWTConfiguration.jwtInternalTokenConfig
@@ -45,14 +46,8 @@ final class QueueHandler(
       .orElse(postgreFlow(contexts))
       .applyOrElse(message, notFoundRecipient)
 
-  // TODO
-
-  private def postgreFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = _ => { _: Message =>
-    // TODO creare la tabella e salvare lo statement di create da qualche parte
-    // Partial Function su ProjectableEvent deve diventare partial function su message
-    // TODO m:Message => pf(m.payload): PF[Message, Future[Unit]]
-
-    Future.unit
+  private def postgreFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = _ => { m: Message =>
+    authorizationEventsHandler.handleEvents(m)
   }
 
   private def dynamoFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = contexts =>

@@ -16,6 +16,7 @@ import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util._
 import it.pagopa.interop.commons.utils.errors.ServiceCode
+import it.pagopa.interop.notifier.database.{AuthorizationEventsDao, KeyEventRecord}
 
 final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationService)(implicit
   ec: ExecutionContext,
@@ -74,5 +75,34 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     objectType = message.payload.objectType,
     objectId = message.payload.objectId
   )
+
+  override def getKeysEvents(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val operationLabel         = s"Retrieving $limit keys messages from id $lastEventId"
+    val result: Future[Events] = AuthorizationEventsDao
+      .select(lastEventId, limit)
+      .map(convertToEvents)
+
+    onComplete(result) {
+      case Success(events) => getKeysEvents200(events)
+      case Failure(ex)     => internalServerError(ex, operationLabel)
+    }
+  }
+
+  private def convertToEvents(records: Seq[KeyEventRecord]): Events = {
+    val events: Seq[Event] = records.map(record =>
+      Event(
+        eventId = record.eventId,
+        eventType = record.eventType.toString,
+        objectType = "KEY",
+        objectId = Map("kid" -> record.kid)
+      )
+    )
+
+    Events(lastEventId = records.lastOption.map(_.eventId), events = events)
+  }
 
 }

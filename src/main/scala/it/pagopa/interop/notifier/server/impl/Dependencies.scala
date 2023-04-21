@@ -14,6 +14,7 @@ import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
+import it.pagopa.interop.authorizationmanagement.model.persistence.AuthorizationEventsSerde.jsonToAuth
 import it.pagopa.interop.catalogmanagement.model.persistence.CatalogEventsSerde.jsonToCatalog
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
@@ -24,7 +25,7 @@ import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.OpenapiUtils
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.{Problem => CommonProblem}
+import it.pagopa.interop.commons.utils.errors.{ServiceCode, Problem => CommonProblem}
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
@@ -43,7 +44,6 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-import it.pagopa.interop.commons.utils.errors.ServiceCode
 
 trait Dependencies {
 
@@ -52,10 +52,8 @@ trait Dependencies {
   implicit val loggerTI: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts")
 
-  // import it.pagopa.interop.authorizationmanagement.model.persistence.SomethingSerde.jsonToAuth
-
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
-    jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog orElse // mettere il deser dei json dell'auth mgmt
+    jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog orElse jsonToAuth
   }
 
   def getJwtReader(): Future[JWTReader] = JWTConfiguration.jwtReader
@@ -127,6 +125,9 @@ trait Dependencies {
       CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
     )
+
+  def authorizationEventsHandler(blockingEc: ExecutionContextExecutor): AuthorizationEventsHandler =
+    new AuthorizationEventsHandler(blockingEc)
 
   def eventIdRetriever(
     sharding: ClusterSharding

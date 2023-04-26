@@ -168,7 +168,8 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
     dailyCalls = 10,
     createdAt = OffsetDateTime.now(),
     updatedAt = None,
-    firstActivationAt = None
+    firstActivationAt = None,
+    suspendedAt = None
   )
 
 }

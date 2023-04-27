@@ -2,6 +2,7 @@ package it.pagopa.interop.notifier.common.system
 
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pagopa.interop.commons.cqrs.model.MongoDbConfig
+import slick.jdbc.JdbcBackend.Database
 
 object ApplicationConfiguration {
   val config: Config                               = ConfigFactory.load()
@@ -41,4 +42,6 @@ object ApplicationConfiguration {
     rsaKeysIdentifiers.nonEmpty || ecKeysIdentifiers.nonEmpty,
     "You MUST provide at least one signing key (either RSA or EC)"
   )
+
+  val postgresqlDB: Database = Database.forConfig(path = "notifier.postgres", config = config)
 }

@@ -1,30 +1,38 @@
 package it.pagopa.interop.notifier.database
 
-import it.pagopa.interop.authorizationmanagement.model.key.PersistentKey
-import it.pagopa.interop.notifier.service.converters.EventType
-import slick.jdbc.JdbcBackend.Database
+import com.typesafe.scalalogging.Logger
+import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.postgresqlDB
+import it.pagopa.interop.notifier.service.converters.EventType.EventType
 import slick.jdbc.PostgresProfile.api._
-import slick.sql.{SqlAction, SqlStreamingAction}
+import slick.sql.SqlStreamingAction
 
 import scala.concurrent.Future
 
 object AuthorizationEventsDao {
-  private final val db = Database.forConfig("keys-db")
+
+  private val logger: Logger = Logger(this.getClass)
 
   def select(lastEventId: Long, limit: Int): Future[Vector[KeyEventRecord]] = {
+    logger.debug(s"Getting keys events from lastEventId ${lastEventId.toString} with limit ${limit.toString}")
     val statement: SqlStreamingAction[Vector[KeyEventRecord], KeyEventRecord, Effect] =
-      sql"SELECT * FROM keys WHERE eventId > $lastEventId ORDER BY eventId ASC LIMIT $limit ".as[KeyEventRecord]
-    db.run(statement)
+      sql"SELECT event_id, kid, event_type FROM public.key_notifications WHERE event_id > $lastEventId ORDER BY event_id ASC LIMIT $limit "
+        .as[KeyEventRecord]
+    postgresqlDB.run(statement)
   }
 
-  def insertKeys(keys: Seq[PersistentKey]): Future[Int] = {
-    val values: String = keys.map(key => s"('${key.kid}','${EventType.ADDED.toString}')").mkString(",")
-    val statement: SqlAction[Int, NoStream, Effect] = sqlu"INSERT INTO keys (kid,eventType) values $values"
-    db.run(statement)
+  def insertKeysNotifications(kids: List[String], eventType: EventType): Future[List[Int]] = {
+    logger.debug(s"Adding ${kids.mkString(",")} keys with eventType ${eventType.toString}")
+    val inserts: List[DBIO[Int]]                                = kids.map(kid => createInsertStatement(kid, eventType))
+    val statements: DBIOAction[List[Int], NoStream, Effect.All] = DBIO.sequence(inserts)
+    postgresqlDB.run(statements)
   }
 
-  def deleteKey(kid: String): Future[Int] = {
-    val statement: DBIOAction[Int, NoStream, Effect] = sqlu"DELETE FROM keys WHERE kid = '$kid'"
-    db.run(statement)
+  def insertKeyNotification(kid: String, eventType: EventType): Future[Int] = {
+    logger.debug(s"Adding $kid keys with eventType ${eventType.toString}")
+    postgresqlDB.run(createInsertStatement(kid, eventType))
   }
+
+  private def createInsertStatement(kid: String, eventType: EventType): DBIO[Int] =
+    sqlu"INSERT INTO public.key_notifications (kid, event_type) values ($kid,${eventType.toString})"
+
 }

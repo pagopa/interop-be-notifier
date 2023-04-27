@@ -7,13 +7,13 @@ import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER}
 import it.pagopa.interop.notifier.model.{MessageId, NotificationMessage}
-import it.pagopa.interop.notifier.service.{AuthorizationEventsHandler, CatalogManagementService}
 import it.pagopa.interop.notifier.service.converters.{
   AgreementEventsConverter,
   CatalogEventsConverter,
   PurposeEventsConverter,
   notFoundRecipient
 }
+import it.pagopa.interop.notifier.service.{AuthorizationEventsHandler, CatalogManagementService}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}

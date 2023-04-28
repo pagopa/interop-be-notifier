@@ -115,6 +115,12 @@ object Dependencies {
     lazy val scanamo = "org.scanamo" %% "scanamo" % scanamoVersion
   }
 
+  private[this] object slick {
+    lazy val namespace = "com.typesafe.slick"
+    lazy val core      = namespace %% "slick" % slickVersion
+    lazy val hikaricp  = namespace %% "slick" % slickVersion
+  }
+
   object Jars {
     lazy val overrides: Seq[ModuleID] =
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
@@ -165,8 +171,8 @@ object Dependencies {
       scalamock.core                   % "test,it",
       akka.testkit                     % "test,it",
       akka.httpTestkit                 % "test,it",
-      "com.typesafe.slick"            %% "slick"                          % "3.3.3"                    % Compile,
-      "com.typesafe.slick"            %% "slick-hikaricp"                 % "3.3.3"                    % Compile,
+      slick.core                       % Compile,
+      slick.hikaricp                   % Compile,
       "org.slf4j"                      % "slf4j-nop"                      % "1.7.26"                   % Compile,
       "org.scalameta"                 %% "munit-scalacheck"               % "0.7.29"                   % Test,
       "com.softwaremill.diffx"        %% "diffx-munit"                    % "0.7.1"                    % Test,

@@ -2,8 +2,12 @@ package it.pagopa.interop.notifier.model
 
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.service.converters.{CatalogEventsConverter, PurposeEventsConverter, notFoundPayload}
-import it.pagopa.interop.notifier.service.converters.AgreementEventsConverter
+import it.pagopa.interop.notifier.service.converters.{
+  AgreementEventsConverter,
+  CatalogEventsConverter,
+  PurposeEventsConverter,
+  notFoundPayload
+}
 
 object NotificationPayload {
   def create(event: ProjectableEvent): Either[ComponentError, NotificationPayload] = {
@@ -33,12 +37,6 @@ sealed trait NotificationPayload {
     */
   def objectId: Map[String, String]
 
-}
-
-case object NoOp extends NotificationPayload {
-  val objectType: String            = ""
-  val eventType: String             = ""
-  val objectId: Map[String, String] = Map.empty[String, String]
 }
 
 final case class PurposePayload(purposeId: String, eventType: String, objectType: String = "PURPOSE")

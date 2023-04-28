@@ -58,14 +58,3 @@ final case class EServicePayload(
   override val objectId: Map[String, String] =
     Map("eServiceId" -> eServiceId) ++ descriptorId.fold(Map.empty[String, String])(d => Map("descriptorId" -> d))
 }
-
-final case class AuthorizationPayload(
-  clientId: String,
-  kid: String,
-  eventType: String,
-  objectType: String = "AUTHORIZATION"
-) extends NotificationPayload {
-  // su dynamo salviamo solo il kid o tutto l'evento?
-  // nella notifica mettiamo solo il kid?
-  val objectId: Map[String, String] = Map("clientId" -> clientId, "kid" -> kid)
-}

@@ -1,7 +1,8 @@
 package it.pagopa.interop.notifier.database
 
 import com.typesafe.scalalogging.Logger
-import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.postgresqlDB
+import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
+import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.{postgresNotificationTable, postgresqlDB}
 import it.pagopa.interop.notifier.service.converters.EventType.EventType
 import slick.jdbc.PostgresProfile.api._
 import slick.sql.SqlStreamingAction
@@ -14,8 +15,9 @@ object AuthorizationEventsDao {
 
   def select(lastEventId: Long, limit: Int): Future[Vector[KeyEventRecord]] = {
     logger.debug(s"Getting keys events from lastEventId ${lastEventId.toString} with limit ${limit.toString}")
+
     val statement: SqlStreamingAction[Vector[KeyEventRecord], KeyEventRecord, Effect] =
-      sql"SELECT event_id, kid, event_type FROM public.key_notifications WHERE event_id > $lastEventId ORDER BY event_id ASC LIMIT $limit "
+      sql"SELECT event_id, kid, event_type FROM $postgresNotificationTable WHERE event_id > $lastEventId ORDER BY event_id ASC LIMIT $limit "
         .as[KeyEventRecord]
     postgresqlDB.run(statement)
   }
@@ -33,6 +35,6 @@ object AuthorizationEventsDao {
   }
 
   private def createInsertStatement(kid: String, eventType: EventType): DBIO[Int] =
-    sqlu"INSERT INTO public.key_notifications (kid, event_type) values ($kid,${eventType.toString})"
+    sqlu"INSERT INTO $postgresNotificationTable (kid, event_type) values ($kid,${eventType.toString})"
 
 }

@@ -44,4 +44,11 @@ object ApplicationConfiguration {
   )
 
   val postgresqlDB: Database = Database.forConfig(path = "notifier.postgres", config = config)
+
+  val postgresNotificationTable: String = {
+    val schema = config.getString("notifier.postgres.notification-schema-name")
+    val table  = config.getString("notifier.postgres.notification-table-name")
+    s"$schema.$table"
+  }
+
 }

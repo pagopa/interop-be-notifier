@@ -87,6 +87,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         suspendedByPlatform = None,
         consumerDocuments = List.empty,
         createdAt = OffsetDateTime.now(),
+        suspendedAt = None,
         updatedAt = None,
         consumerNotes = None,
         contract = None,

@@ -179,11 +179,11 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
     dailyCallsTotal = 1,
     agreementApprovalPolicy = None,
     serverUrls = List("url"),
-    createdAt = OffsetDateTime.now(),
-    publishedAt = None,
+    createdAt = OffsetDateTime.now().minusDays(10),
+    archivedAt = None,
+    publishedAt = Some(OffsetDateTime.now()),
     suspendedAt = None,
-    deprecatedAt = None,
-    archivedAt = None
+    deprecatedAt = None
   )
 
   private def getCatalogDocument(id: UUID) = CatalogDocument(

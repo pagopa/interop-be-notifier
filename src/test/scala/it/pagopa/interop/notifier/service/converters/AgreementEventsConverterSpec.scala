@@ -124,6 +124,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
     consumerDocuments = List.empty,
     createdAt = OffsetDateTime.now(),
     updatedAt = None,
+    suspendedAt = None,
     consumerNotes = None,
     contract = None,
     stamps = PersistentStamps(),

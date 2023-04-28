@@ -107,7 +107,7 @@ object Dependencies {
     lazy val commonsUtils = namespace %% "interop-commons-utils"         % commonsVersion
     lazy val commonsJWT   = namespace %% "interop-commons-jwt"           % commonsVersion
     lazy val commonsCqrs  = namespace %% "interop-commons-cqrs"          % commonsVersion
-    lazy val vault        = namespace %% "interop-commons-signer"        % commonsVersion
+    lazy val signer       = namespace %% "interop-commons-signer"        % commonsVersion
     lazy val queueManager = namespace %% "interop-commons-queue-manager" % commonsVersion
   }
 
@@ -162,7 +162,7 @@ object Dependencies {
       pagopa.commonsUtils              % "compile,it",
       pagopa.commonsJWT                % Compile,
       pagopa.commonsCqrs               % "compile,it",
-      pagopa.vault                     % Compile,
+      pagopa.signer                    % Compile,
       pagopa.queueManager              % Compile,
       postgres.jdbc                    % "compile,it",
       scanamo.scanamo                  % Compile,

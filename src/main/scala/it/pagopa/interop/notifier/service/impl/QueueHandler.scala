@@ -43,12 +43,10 @@ final class QueueHandler(
 
   private def messageFlow(contexts: Seq[(String, String)], message: Message): Future[Unit] =
     dynamoFlow(contexts)
-      .orElse(postgreFlow(contexts))
+      .orElse(postgreFlow)
       .applyOrElse(message, notFoundRecipient)
 
-  private def postgreFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = _ => { m: Message =>
-    authorizationEventsHandler.handleEvents(m)
-  }
+  private def postgreFlow: PartialFunction[Message, Future[Unit]] = authorizationEventsHandler.handleEvents
 
   private def dynamoFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = contexts =>
     Function.unlift({ msg: Message =>

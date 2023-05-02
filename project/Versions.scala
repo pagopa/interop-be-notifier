@@ -25,7 +25,7 @@ object Versions {
 
 object PagopaVersions {
   lazy val commonsVersion             = "1.0.x-SNAPSHOT"
-  lazy val authManagementVersion      = "1.0.x-SNAPSHOT"
+  lazy val authorizationManagementVersion      = "1.0.x-SNAPSHOT"
   lazy val purposeManagementVersion   = "1.0.x-SNAPSHOT"
   lazy val agreementManagementVersion = "1.0.x-SNAPSHOT"
   lazy val catalogManagementVersion   = "1.0.x-SNAPSHOT"

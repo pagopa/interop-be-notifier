@@ -2,7 +2,7 @@ package it.pagopa.interop.notifier.service.converters
 import it.pagopa.interop.agreementmanagement.model.persistence._
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.model.{AgreementPayload, MessageId, NotificationPayload}
+import it.pagopa.interop.notifier.model.{AgreementPayload, MessageId, NotificationObjectType, NotificationPayload}
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -59,7 +59,7 @@ object AgreementEventsConverter {
       AgreementPayload(
         agreementId = a.id.toString(),
         eventType = EventType.UPDATED.toString(),
-        objectType = "AGREEMENT_VERIFIED_ATTRIBUTE"
+        objectType = NotificationObjectType.AGREEMENT_VERIFIED_ATTRIBUTE
       )
     case AgreementContractAdded(id, _)           =>
       AgreementPayload(agreementId = id, eventType = EventType.UPDATED.toString())

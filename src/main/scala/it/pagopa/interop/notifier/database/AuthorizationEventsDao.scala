@@ -2,8 +2,9 @@ package it.pagopa.interop.notifier.database
 
 import com.typesafe.scalalogging.Logger
 import it.pagopa.interop.notifier.common.system.ApplicationConfiguration
-import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.{postgresNotificationTable, postgresqlDB}
+import it.pagopa.interop.notifier.common.system.ApplicationConfiguration.postgresNotificationTable
 import it.pagopa.interop.notifier.service.converters.EventType.EventType
+import slick.jdbc.JdbcBackend.Database
 import slick.jdbc.PostgresProfile.api._
 import slick.sql.SqlStreamingAction
 
@@ -12,6 +13,9 @@ import scala.concurrent.Future
 object AuthorizationEventsDao {
 
   private val logger: Logger = Logger(this.getClass)
+
+  private final val postgresqlDB: Database =
+    Database.forConfig(path = "notifier.postgres", config = ApplicationConfiguration.config)
 
   def select(lastEventId: Long, limit: Int): Future[Vector[KeyEventRecord]] = {
     logger.debug(s"Getting keys events from lastEventId ${lastEventId.toString} with limit ${limit.toString}")

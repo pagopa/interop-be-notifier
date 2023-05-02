@@ -3,7 +3,7 @@ package it.pagopa.interop.notifier.service.converters
 import it.pagopa.interop.agreementmanagement.model.agreement.{Active, PersistentAgreement, PersistentStamps}
 import it.pagopa.interop.agreementmanagement.model.persistence._
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.model.{AgreementPayload, NotificationPayload}
+import it.pagopa.interop.notifier.model.{AgreementPayload, NotificationObjectType, NotificationPayload}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -102,7 +102,11 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
         AgreementEventsConverter.asNotificationPayload(e)
       // then
       conversion shouldBe Right(
-        AgreementPayload(id.toString, EventType.UPDATED.toString, objectType = "AGREEMENT_VERIFIED_ATTRIBUTE")
+        AgreementPayload(
+          id.toString,
+          EventType.UPDATED.toString,
+          objectType = NotificationObjectType.AGREEMENT_VERIFIED_ATTRIBUTE
+        )
       )
     }
 
@@ -128,8 +132,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
     consumerNotes = None,
     contract = None,
     stamps = PersistentStamps(),
-    rejectionReason = None,
-    suspendedAt = None
+    rejectionReason = None
   )
 
 }

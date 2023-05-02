@@ -216,7 +216,7 @@ components:
         eventType:
           type: string
         objectType:
-          type: string
+          $ref: '#/components/schemas/ObjectType'
         objectId:
           additionalProperties:
             type: string
@@ -225,6 +225,14 @@ components:
         - eventType
         - objectType
         - objectId
+    ObjectType:
+      type: string
+      enum:
+        - AGREEMENT
+        - ESERVICE
+        - KEY
+        - PURPOSE
+        - AGREEMENT_VERIFIED_ATTRIBUTE
     Problem:
       properties:
         type:

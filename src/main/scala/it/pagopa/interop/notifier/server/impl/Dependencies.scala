@@ -67,12 +67,11 @@ trait Dependencies {
     )
     .toFuture
 
-  def initProjections()(implicit actorSystem: ActorSystem[_]): Unit = {
+  def initProjections()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): Unit = {
     val dbConfig: DatabaseConfig[JdbcProfile] =
       DatabaseConfig.forConfig("akka-persistence-jdbc.shared-databases.slick")
 
-    implicit val ec: ExecutionContext = actorSystem.executionContext
-    val mongoDbConfig                 = ApplicationConfiguration.mongoDb
+    val mongoDbConfig = ApplicationConfiguration.mongoDb
 
     val projectionId   = "notifier-cqrs-projections"
     val cqrsProjection = NotifierCqrsProjection.projection(dbConfig, mongoDbConfig, projectionId)

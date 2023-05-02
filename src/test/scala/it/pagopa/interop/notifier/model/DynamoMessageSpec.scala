@@ -92,8 +92,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         consumerNotes = None,
         contract = None,
         stamps = PersistentStamps(),
-        rejectionReason = None,
-        suspendedAt = None
+        rejectionReason = None
       )
 
       val event = AgreementActivated(pa)

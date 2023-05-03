@@ -14,6 +14,7 @@ import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementEventsSerde.jsonToAgreement
+import it.pagopa.interop.authorizationmanagement.model.persistence.AuthorizationEventsSerde.jsonToAuth
 import it.pagopa.interop.catalogmanagement.model.persistence.CatalogEventsSerde.jsonToCatalog
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
@@ -24,8 +25,7 @@ import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.OpenapiUtils
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.{Problem => CommonProblem}
-import it.pagopa.interop.notifier.api.impl.ResponseHandlers.serviceCode
+import it.pagopa.interop.commons.utils.errors.{ServiceCode, Problem => CommonProblem}
 import it.pagopa.interop.notifier.api.impl.{
   EventsApiMarshallerImpl,
   EventsServiceApiImpl,
@@ -40,7 +40,6 @@ import it.pagopa.interop.notifier.model.persistence.{Command, OrganizationNotifi
 import it.pagopa.interop.notifier.service._
 import it.pagopa.interop.notifier.service.impl._
 import it.pagopa.interop.purposemanagement.model.persistence.PurposeEventsSerde.jsonToPurpose
-import org.scanamo.ScanamoAsync
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -48,11 +47,13 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
 
+  implicit val serviceCode: ServiceCode = ServiceCode("017")
+
   implicit val loggerTI: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts")
 
   def sqsReader()(implicit ec: ExecutionContext): QueueReader = QueueReader.get(ApplicationConfiguration.queueURL) {
-    jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog
+    jsonToPurpose orElse jsonToAgreement orElse jsonToCatalog orElse jsonToAuth
   }
 
   def getJwtReader(): Future[JWTReader] = JWTConfiguration.jwtReader
@@ -96,14 +97,12 @@ trait Dependencies {
     Entity(OrganizationNotificationEventIdBehavior.TypeKey)(notificationBehaviorFactory)
 
   def eventsApi(dynamoNotificationService: DynamoNotificationService, jwtReader: JWTReader)(implicit
-    ec: ExecutionContext,
-    scanamo: ScanamoAsync
-  ): EventsApi =
-    new EventsApi(
-      new EventsServiceApiImpl(dynamoNotificationService),
-      EventsApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
-    )
+    ec: ExecutionContext
+  ): EventsApi = new EventsApi(
+    new EventsServiceApiImpl(dynamoNotificationService),
+    EventsApiMarshallerImpl,
+    jwtReader.OAuth2JWTValidatorAsContexts
+  )
 
   val validationExceptionToRoute: ValidationReport => Route = report => {
     val error =
@@ -125,6 +124,9 @@ trait Dependencies {
       CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
     )
+
+  def authorizationEventsHandler(blockingEc: ExecutionContextExecutor): AuthorizationEventsHandler =
+    new AuthorizationEventsHandler(blockingEc)
 
   def eventIdRetriever(
     sharding: ClusterSharding

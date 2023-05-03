@@ -7,14 +7,13 @@ import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER}
 import it.pagopa.interop.notifier.model.{MessageId, NotificationMessage}
-import it.pagopa.interop.notifier.service.CatalogManagementService
 import it.pagopa.interop.notifier.service.converters.{
   AgreementEventsConverter,
   CatalogEventsConverter,
   PurposeEventsConverter,
   notFoundRecipient
 }
-import org.scanamo.ScanamoAsync
+import it.pagopa.interop.notifier.service.{AuthorizationEventsHandler, CatalogManagementService}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,50 +23,56 @@ final class QueueHandler(
   idRetriever: EventIdRetriever,
   dynamoNotificationService: DynamoNotificationService,
   dynamoIndexService: DynamoNotificationResourcesService,
-  catalogManagementService: CatalogManagementService
+  catalogManagementService: CatalogManagementService,
+  authorizationEventsHandler: AuthorizationEventsHandler
 )(implicit ec: ExecutionContext) {
 
   lazy val jwtConfig: JWTInternalTokenConfig = JWTConfiguration.jwtInternalTokenConfig
-  private val logger                         = Logger(this.getClass)
+  private val logger: Logger                 = Logger(this.getClass)
 
-  /*
-   * it does:
-   *
-   *  - M2M token generation for calling services downstream
-   *  - given a message payload, retrieves the recipient of the message
-   *  - gets the next event id for the corresponding recipient
-   *  - saves the event on dynamo
-   */
-  def processMessage(msg: Message)(implicit scanamo: ScanamoAsync): Future[Unit] = for {
-    m2mToken <- interopTokenGenerator
-      .generateInternalToken(
-        subject = jwtConfig.subject,
-        audience = jwtConfig.audience.toList,
-        tokenIssuer = jwtConfig.issuer,
-        secondsDuration = jwtConfig.durationInSeconds
-      )
-    m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized)
-    messageId <- extractMessageId(msg.payload, dynamoIndexService)(scanamo, m2mContexts)
-    _ = logger.debug(s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}")
-    nextEvent <- idRetriever.getNextEventIdForOrganization(messageId.organizationId)(m2mContexts)
-    _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
-    notificationMessage <- NotificationMessage.create(messageId, nextEvent.eventId, msg).toFuture
-    result              <- dynamoNotificationService.put(notificationMessage)
-    _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
-  } yield result
+  private def generateM2mContexts: Future[List[(String, String)]] = interopTokenGenerator
+    .generateInternalToken(
+      subject = jwtConfig.subject,
+      audience = jwtConfig.audience.toList,
+      tokenIssuer = jwtConfig.issuer,
+      secondsDuration = jwtConfig.durationInSeconds
+    )
+    .map(m2mToken => List(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken.serialized))
 
-  private[this] def extractMessageId(
-    event: ProjectableEvent,
-    dynamoIndexService: DynamoNotificationResourcesService
-  )(implicit scanamo: ScanamoAsync, contexts: Seq[(String, String)]): Future[MessageId] = {
-    val composed: PartialFunction[ProjectableEvent, Future[MessageId]] = {
-      PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse
-        AgreementEventsConverter.getMessageId(dynamoIndexService) orElse
-        CatalogEventsConverter.getMessageId(dynamoIndexService) orElse
-        notFoundRecipient
-    }
+  def processMessage(msg: Message): Future[Unit] = generateM2mContexts.flatMap(messageFlow(_, msg))
 
-    composed(event)
-  }
+  private def messageFlow(contexts: Seq[(String, String)], message: Message): Future[Unit] =
+    dynamoFlow(contexts)
+      .orElse(postgreFlow)
+      .applyOrElse(message, notFoundRecipient)
+
+  private def postgreFlow: PartialFunction[Message, Future[Unit]] = authorizationEventsHandler.handleEvents
+
+  private def dynamoFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = contexts =>
+    Function.unlift({ msg: Message =>
+      implicit val ctx: Seq[(String, String)] = contexts
+
+      val getMessageId: PartialFunction[ProjectableEvent, Future[MessageId]] =
+        PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse
+          AgreementEventsConverter.getMessageId(dynamoIndexService) orElse
+          CatalogEventsConverter.getMessageId(dynamoIndexService)
+
+      val flow: PartialFunction[ProjectableEvent, Future[Unit]] = getMessageId
+        .andThen(messageIdF =>
+          for {
+            messageId <- messageIdF
+            _ = logger.debug(
+              s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}"
+            )
+            nextEvent <- idRetriever.getNextEventIdForOrganization(messageId.organizationId)(contexts)
+            _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
+            notificationMessage <- NotificationMessage.create(messageId, nextEvent.eventId, msg).toFuture
+            ()                  <- dynamoNotificationService.put(notificationMessage)
+            _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
+          } yield ()
+        )
+
+      flow.lift(msg.payload)
+    })
 
 }

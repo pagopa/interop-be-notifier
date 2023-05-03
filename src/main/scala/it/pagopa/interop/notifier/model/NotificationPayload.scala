@@ -18,7 +18,6 @@ object NotificationPayload {
         notFoundPayload
     composed(event)
   }
-
 }
 
 sealed trait NotificationPayload {
@@ -26,7 +25,7 @@ sealed trait NotificationPayload {
   /**
     * Defines type of this object, e.g.: AGREEMENT, PURPOSE, etc.
     */
-  val objectType: String
+  val objectType: NotificationObjectType
 
   /**
     * Defines type of this event, e.g.: ADDED, UPDATED, DELETED etc.
@@ -40,12 +39,19 @@ sealed trait NotificationPayload {
 
 }
 
-final case class PurposePayload(purposeId: String, eventType: String, objectType: String = "PURPOSE")
-    extends NotificationPayload {
+final case class PurposePayload(
+  purposeId: String,
+  eventType: String,
+  objectType: NotificationObjectType = NotificationObjectType.PURPOSE
+) extends NotificationPayload {
   override val objectId: Map[String, String] = Map("purposeId" -> purposeId)
 }
-final case class AgreementPayload(agreementId: String, eventType: String, objectType: String = "AGREEMENT")
-    extends NotificationPayload {
+
+final case class AgreementPayload(
+  agreementId: String,
+  eventType: String,
+  objectType: NotificationObjectType = NotificationObjectType.AGREEMENT
+) extends NotificationPayload {
   override val objectId: Map[String, String] = Map("agreementId" -> agreementId)
 }
 
@@ -53,7 +59,7 @@ final case class EServicePayload(
   eServiceId: String,
   descriptorId: Option[String],
   eventType: String,
-  objectType: String = "ESERVICE"
+  objectType: NotificationObjectType = NotificationObjectType.ESERVICE
 ) extends NotificationPayload {
   override val objectId: Map[String, String] =
     Map("eServiceId" -> eServiceId) ++ descriptorId.fold(Map.empty[String, String])(d => Map("descriptorId" -> d))

@@ -42,9 +42,9 @@ object ApplicationConfiguration {
     "You MUST provide at least one signing key (either RSA or EC)"
   )
 
-  val postgresNotificationTable: String = {
+  val postgresKeysNotificationTable: String = {
     val schema = config.getString("notifier.postgres.notification-schema-name")
-    val table  = config.getString("notifier.postgres.notification-table-name")
+    val table  = config.getString("notifier.postgres.tables.key-notification-table-name")
     s"$schema.$table"
   }
 

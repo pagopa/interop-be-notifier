@@ -38,14 +38,7 @@ object AuthorizationEventsDao {
     postgresqlDB.run(createInsertStatement(kid, eventType))
   }
 
-  private def createInsertStatement(kid: String, eventType: EventType): DBIO[Int] = {
-    println(kid)
-    println(eventType)
-    println(postgresKeysNotificationTable)
-    val statement =
-      sqlu"INSERT INTO #$postgresKeysNotificationTable (kid, event_type) values ($kid, ${eventType.toString})"
-    statement.statements.foreach(println)
-    statement
-  }
+  private def createInsertStatement(kid: String, eventType: EventType): DBIO[Int] =
+    sqlu"INSERT INTO #$postgresKeysNotificationTable (kid, event_type) values ($kid, ${eventType.toString})"
 
 }

@@ -6,14 +6,12 @@ import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{EServicePayload, MessageId, NotificationPayload}
 import it.pagopa.interop.notifier.service.converters.EventType._
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
-import org.scanamo.ScanamoAsync
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object CatalogEventsConverter {
 
   def getMessageId(dynamoService: DynamoNotificationResourcesService)(implicit
-    scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): PartialFunction[ProjectableEvent, Future[MessageId]] = { case e: Event =>
@@ -21,7 +19,6 @@ object CatalogEventsConverter {
   }
 
   private[this] def getMessageIdFromEvent(dynamoService: DynamoNotificationResourcesService, event: Event)(implicit
-    scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): Future[MessageId] =

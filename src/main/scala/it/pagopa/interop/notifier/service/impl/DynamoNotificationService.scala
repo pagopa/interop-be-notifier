@@ -14,8 +14,7 @@ import org.scanamo.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object DynamoNotificationService extends DynamoNotificationService
-trait DynamoNotificationService {
+class DynamoNotificationService(scanamo: ScanamoAsync) {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
@@ -23,18 +22,16 @@ trait DynamoNotificationService {
   val messages: Table[NotificationMessage] =
     Table[NotificationMessage](ApplicationConfiguration.dynamoNotificationTableName)
 
-  def put(message: NotificationMessage)(implicit scanamo: ScanamoAsync): Future[Unit] =
-    scanamo.exec(messages.put(message))
+  def put(message: NotificationMessage): Future[Unit] = scanamo.exec(messages.put(message))
 
   def get(limit: Int)(organizationId: String, eventId: Long)(implicit
-    scanamo: ScanamoAsync,
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): Future[List[NotificationMessage]] = {
     logger.debug(s"Getting $limit events for organization $organizationId from $eventId")
     val operations: ScanamoOps[List[Either[DynamoReadError, NotificationMessage]]] =
       messages.query("organizationId" === organizationId and "eventId" > eventId)
-    scanamo.exec(operations).map(x => x.sequence).flatMap {
+    scanamo.exec(operations).map(_.sequence).flatMap {
       case Right(x)  =>
         logger.debug(s"${x.size} messages retrieved from Dynamo")
         Future.successful(x.take(limit)) // TODO consider improving this using the limit upstream

@@ -19,8 +19,7 @@ class EventIdAddedSerializer extends SerializerWithStringManifest {
   final val className: String = classOf[EventIdAdded].getName
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
-    case event: EventIdAdded =>
-      serialize(event, className, currentVersion)
+    case event: EventIdAdded => serialize(event, className, currentVersion)
     case _                   =>
       throw new NotSerializableException(
         s"Unable to handle manifest: [[${manifest(o)}]], currentVersion: [[$currentVersion]]"
@@ -28,8 +27,7 @@ class EventIdAddedSerializer extends SerializerWithStringManifest {
   }
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef = manifest.split('|').toList match {
-    case `className` :: `version1` :: Nil =>
-      deserialize(v1.events.EventIdAddedV1, bytes, manifest, currentVersion)
+    case `className` :: `version1` :: Nil => deserialize(v1.events.EventIdAddedV1, bytes, manifest, currentVersion)
     case _                                =>
       throw new NotSerializableException(
         s"Unable to handle manifest: [[$manifest]], currentVersion: [[$currentVersion]]"

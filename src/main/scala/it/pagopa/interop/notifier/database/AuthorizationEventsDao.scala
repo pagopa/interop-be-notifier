@@ -21,7 +21,7 @@ object AuthorizationEventsDao {
     logger.debug(s"Getting keys events from lastEventId ${lastEventId.toString} with limit ${limit.toString}")
 
     val statement: SqlStreamingAction[Vector[KeyEventRecord], KeyEventRecord, Effect] =
-      sql"SELECT event_id, kid, event_type FROM $postgresKeysNotificationTable WHERE event_id > $lastEventId ORDER BY event_id ASC LIMIT $limit"
+      sql"SELECT event_id, kid, event_type FROM #$postgresKeysNotificationTable WHERE event_id > $lastEventId ORDER BY event_id ASC LIMIT $limit"
         .as[KeyEventRecord]
     postgresqlDB.run(statement)
   }
@@ -38,7 +38,14 @@ object AuthorizationEventsDao {
     postgresqlDB.run(createInsertStatement(kid, eventType))
   }
 
-  private def createInsertStatement(kid: String, eventType: EventType): DBIO[Int] =
-    sqlu"INSERT INTO $postgresKeysNotificationTable (kid, event_type) values ($kid,${eventType.toString})"
+  private def createInsertStatement(kid: String, eventType: EventType): DBIO[Int] = {
+    println(kid)
+    println(eventType)
+    println(postgresKeysNotificationTable)
+    val statement =
+      sqlu"INSERT INTO #$postgresKeysNotificationTable (kid, event_type) values ($kid, ${eventType.toString})"
+    statement.statements.foreach(println)
+    statement
+  }
 
 }

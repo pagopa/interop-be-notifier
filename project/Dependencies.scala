@@ -175,7 +175,7 @@ object Dependencies {
       slick.hikaricp                       % Compile,
       "org.slf4j"                          % "slf4j-nop"            % "1.7.26" % Compile,
       "org.scalameta"                     %% "munit-scalacheck"     % "0.7.29" % Test,
-      "com.softwaremill.diffx"            %% "diffx-munit"          % "0.7.1"  % Test,
+      "com.softwaremill.diffx"            %% "diffx-munit"          % "0.8.3"  % Test,
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testcontainersScalaVersion % IntegrationTest
     )
     lazy val client: Seq[ModuleID]    =

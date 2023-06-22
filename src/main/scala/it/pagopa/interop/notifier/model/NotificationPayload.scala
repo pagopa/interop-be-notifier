@@ -10,13 +10,14 @@ import it.pagopa.interop.notifier.service.converters.{
 }
 
 object NotificationPayload {
-  def create(event: ProjectableEvent): Either[ComponentError, NotificationPayload] = {
-    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] =
+  def create(event: ProjectableEvent): Either[ComponentError, Option[NotificationPayload]] = {
+    val composed: PartialFunction[ProjectableEvent, Either[ComponentError, Option[NotificationPayload]]] =
       PurposeEventsConverter.asNotificationPayload orElse
         AgreementEventsConverter.asNotificationPayload orElse
-        CatalogEventsConverter.asNotificationPayload orElse
-        notFoundPayload
-    composed(event)
+        CatalogEventsConverter.asNotificationPayload
+
+    composed.applyOrElse(event, notFoundPayload)
+
   }
 }
 

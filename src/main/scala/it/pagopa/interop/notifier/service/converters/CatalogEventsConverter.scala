@@ -8,61 +8,63 @@ import it.pagopa.interop.notifier.service.converters.EventType._
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 
 import scala.concurrent.{ExecutionContext, Future}
+import it.pagopa.interop.notifier.service.converters.allOrganizations
+import cats.syntax.all._
 
 object CatalogEventsConverter {
 
   def getMessageId(dynamoService: DynamoNotificationResourcesService)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): PartialFunction[ProjectableEvent, Future[MessageId]] = { case e: Event =>
+  ): PartialFunction[ProjectableEvent, Future[Option[MessageId]]] = { case e: Event =>
     getMessageIdFromEvent(dynamoService, e)
   }
 
   private[this] def getMessageIdFromEvent(dynamoService: DynamoNotificationResourcesService, event: Event)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): Future[MessageId] =
+  ): Future[Option[MessageId]] =
     event match {
-      case CatalogItemAdded(c)                        =>
+      case CatalogItemAdded(c)                         =>
         val messageId: MessageId = MessageId(c.id, allOrganizations)
-        dynamoService.put(messageId).map(_ => messageId)
-      case ClonedCatalogItemAdded(c)                  =>
+        dynamoService.put(messageId).map(_ => messageId.some)
+      case ClonedCatalogItemAdded(c)                   =>
         val messageId: MessageId = MessageId(c.id, allOrganizations)
-        dynamoService.put(messageId).map(_ => messageId)
-      case CatalogItemUpdated(c)                      => Future.successful(MessageId(c.id, allOrganizations))
-      case CatalogItemWithDescriptorsDeleted(c, _)    => Future.successful(MessageId(c.id, allOrganizations))
-      case CatalogItemDocumentUpdated(id, _, _, _, _) => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDeleted(id)                     => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDocumentAdded(id, _, _, _, _)   => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDocumentDeleted(id, _, _)       => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDescriptorAdded(id, _)          => getMessageIdFromDynamo(dynamoService)(id)
-      case CatalogItemDescriptorUpdated(id, _)        => getMessageIdFromDynamo(dynamoService)(id)
+        dynamoService.put(messageId).map(_ => messageId.some)
+      case CatalogItemUpdated(c)                       => Future.successful(MessageId(c.id, allOrganizations).some)
+      case CatalogItemWithDescriptorsDeleted(c, _)     => Future.successful(MessageId(c.id, allOrganizations).some)
+      case CatalogItemDocumentUpdated(id, _, _, _, _)  => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      case CatalogItemDeleted(id)                      => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      case CatalogItemDocumentAdded(id, _, _, _, _)    => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      case CatalogItemDocumentDeleted(id, _, _)        => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      case CatalogItemDescriptorAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      case CatalogItemDescriptorUpdated(id, _)         => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      case MovedAttributesFromEserviceToDescriptors(_) => Future.successful(None)
     }
 
-  def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] = {
-    case e: Event =>
-      Right(getEventNotificationPayload(e))
+  def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, Option[NotificationPayload]]] = {
+    case e: Event => Right(getEventNotificationPayload(e))
   }
 
-  private[this] def getEventNotificationPayload(event: Event): NotificationPayload = {
+  private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] =
     event match {
-      case CatalogItemAdded(catalogItem)       => EServicePayload(catalogItem.id.toString, None, ADDED.toString)
-      case ClonedCatalogItemAdded(catalogItem) => EServicePayload(catalogItem.id.toString, None, CLONED.toString)
-      case CatalogItemUpdated(catalogItem)     => EServicePayload(catalogItem.id.toString, None, UPDATED.toString)
+      case CatalogItemAdded(catalogItem)       => EServicePayload(catalogItem.id.toString, None, ADDED.toString).some
+      case ClonedCatalogItemAdded(catalogItem) => EServicePayload(catalogItem.id.toString, None, CLONED.toString).some
+      case CatalogItemUpdated(catalogItem)     => EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
       case CatalogItemWithDescriptorsDeleted(catalogItem, descriptorId)  =>
-        EServicePayload(catalogItem.id.toString, Some(descriptorId), DELETED.toString)
+        EServicePayload(catalogItem.id.toString, Some(descriptorId), DELETED.toString).some
       case CatalogItemDocumentUpdated(eServiceId, descriptorId, _, _, _) =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString)
-      case CatalogItemDeleted(catalogItemId) => EServicePayload(catalogItemId, None, DELETED.toString)
+        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString).some
+      case CatalogItemDeleted(catalogItemId) => EServicePayload(catalogItemId, None, DELETED.toString).some
       case CatalogItemDocumentAdded(eServiceId, descriptorId, _, _, _) =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString)
+        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString).some
       case CatalogItemDocumentDeleted(eServiceId, descriptorId, _)     =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString)
+        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString).some
       case CatalogItemDescriptorAdded(eServiceId, catalogDescriptor)   =>
-        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), ADDED.toString)
+        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), ADDED.toString).some
       case CatalogItemDescriptorUpdated(eServiceId, catalogDescriptor) =>
-        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), UPDATED.toString)
+        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), UPDATED.toString).some
+      case MovedAttributesFromEserviceToDescriptors(_)                 => None
     }
 
-  }
 }

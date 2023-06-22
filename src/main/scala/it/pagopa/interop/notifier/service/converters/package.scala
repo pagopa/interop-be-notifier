@@ -20,9 +20,8 @@ package object converters {
   def notFoundRecipient: Message => Future[Unit] = message =>
     Future.failed(MessageRecipientNotFound(message.payload.getClass.getName))
 
-  def notFoundPayload: PartialFunction[ProjectableEvent, Either[ComponentError, NotificationPayload]] = { case x =>
-    Left(DynamoConverterNotFound(x.getClass.getName))
-  }
+  def notFoundPayload: ProjectableEvent => Either[ComponentError, Option[NotificationPayload]] =
+    x => Left(DynamoConverterNotFound(x.getClass.getName))
 
   object EventType extends Enumeration {
     type EventType = Value

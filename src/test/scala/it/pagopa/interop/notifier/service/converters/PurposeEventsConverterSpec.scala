@@ -157,7 +157,9 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
     description = "description",
     riskAnalysisForm = None,
     createdAt = OffsetDateTime.now(),
-    updatedAt = None
+    updatedAt = None,
+    isFreeOfCharge = false,
+    freeOfChargeReason = None
   )
 
   private def getPurposeVersion(versionId: UUID): PersistentPurposeVersion = PersistentPurposeVersion(

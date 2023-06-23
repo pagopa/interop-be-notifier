@@ -36,7 +36,9 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         description = "description",
         riskAnalysisForm = None,
         createdAt = OffsetDateTime.now(),
-        updatedAt = None
+        updatedAt = None,
+        isFreeOfCharge = false,
+        freeOfChargeReason = None
       )
       val event = PurposeCreated(pp)
 

@@ -52,25 +52,24 @@ final class QueueHandler(
     Function.unlift({ msg: Message =>
       implicit val ctx: Seq[(String, String)] = contexts
 
-      val getMessageId: PartialFunction[ProjectableEvent, Future[MessageId]] =
+      val getMessageId: PartialFunction[ProjectableEvent, Future[Option[MessageId]]] =
         PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse
           AgreementEventsConverter.getMessageId(dynamoIndexService) orElse
           CatalogEventsConverter.getMessageId(dynamoIndexService)
 
       val flow: PartialFunction[ProjectableEvent, Future[Unit]] = getMessageId
-        .andThen(messageIdF =>
-          for {
-            messageId <- messageIdF
-            _ = logger.debug(
-              s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}"
-            )
-            nextEvent <- idRetriever.getNextEventIdForOrganization(messageId.organizationId)(contexts)
-            _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
-            notificationMessage <- NotificationMessage.create(messageId, nextEvent.eventId, msg).toFuture
-            ()                  <- dynamoNotificationService.put(notificationMessage)
-            _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
-          } yield ()
-        )
+        .andThen(_.flatMap {
+          case Some(messageId) =>
+            logger.debug(s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}")
+            for {
+              nextEvent <- idRetriever.getNextEventIdForOrganization(messageId.organizationId)(contexts)
+              _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
+              notificationMessage <- NotificationMessage.create(messageId, nextEvent.eventId, msg).toFuture
+              ()                  <- notificationMessage.fold(Future.unit)(dynamoNotificationService.put)
+              _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
+            } yield ()
+          case None            => Future.unit
+        })
 
       flow.lift(msg.payload)
     })

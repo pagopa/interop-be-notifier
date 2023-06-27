@@ -9,6 +9,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import cats.syntax.all._
 
 class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
 
@@ -21,10 +22,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val p  = PurposeCreated(pp)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(p)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.CREATED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.CREATED.toString).some)
     }
 
     "Convert purpose updated to event payload" in {
@@ -34,10 +35,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val p  = PurposeUpdated(pp)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(p)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.UPDATED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.UPDATED.toString).some)
     }
 
     "Convert purpose version created to event payload" in {
@@ -48,10 +49,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e         = PurposeVersionCreated(id.toString, pv)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.CREATED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.CREATED.toString).some)
     }
 
     "Convert purpose activated to event payload" in {
@@ -61,10 +62,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e  = PurposeVersionActivated(pp)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.ACTIVATED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.ACTIVATED.toString).some)
     }
 
     "Convert purpose suspended to event payload" in {
@@ -74,10 +75,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e  = PurposeVersionSuspended(pp)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.SUSPENDED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.SUSPENDED.toString).some)
     }
 
     "Convert purpose archived to event payload" in {
@@ -87,10 +88,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e  = PurposeVersionArchived(pp)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.ARCHIVED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.ARCHIVED.toString).some)
     }
 
     "Convert purpose version updated to event payload" in {
@@ -101,10 +102,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e         = PurposeVersionUpdated(id.toString, pp)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.UPDATED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.UPDATED.toString).some)
     }
 
     "Convert purpose version deleted to event payload" in {
@@ -114,10 +115,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e         = PurposeVersionDeleted(id.toString, versionId.toString)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.DELETED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.DELETED.toString).some)
     }
 
     "Convert purpose deleted to event payload" in {
@@ -126,10 +127,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e  = PurposeDeleted(id.toString)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.DELETED.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.DELETED.toString).some)
     }
 
     "Convert purpose waited for approval to event payload" in {
@@ -139,10 +140,10 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
       val e  = PurposeVersionWaitedForApproval(pp)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         PurposeEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(PurposePayload(id.toString, EventType.WAITING_FOR_APPROVAL.toString))
+      conversion shouldBe Right(PurposePayload(id.toString, EventType.WAITING_FOR_APPROVAL.toString).some)
     }
   }
 
@@ -158,8 +159,8 @@ class PurposeEventsConverterSpec extends AnyWordSpecLike with Matchers {
     riskAnalysisForm = None,
     createdAt = OffsetDateTime.now(),
     updatedAt = None,
-    isFreeOfCharge = false,
-    freeOfChargeReason = None
+    isFreeOfCharge = true,
+    freeOfChargeReason = Some("BOH")
   )
 
   private def getPurposeVersion(versionId: UUID): PersistentPurposeVersion = PersistentPurposeVersion(

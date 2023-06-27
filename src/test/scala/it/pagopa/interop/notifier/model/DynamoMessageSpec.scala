@@ -12,6 +12,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import cats.syntax.all._
 
 class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
@@ -37,8 +38,8 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         riskAnalysisForm = None,
         createdAt = OffsetDateTime.now(),
         updatedAt = None,
-        isFreeOfCharge = false,
-        freeOfChargeReason = None
+        isFreeOfCharge = true,
+        freeOfChargeReason = Some("BOH")
       )
       val event = PurposeCreated(pp)
 
@@ -49,10 +50,10 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val eventId        = 1L
 
       // when
-      val conversion: Either[ComponentError, NotificationMessage] =
+      val conversion: Either[ComponentError, Option[NotificationMessage]] =
         NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
-      val expected                                                = NotificationMessage(
+      val expected                                                        = NotificationMessage(
         organizationId,
         eventId,
         messageUUID = messageId,
@@ -62,7 +63,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         payload = PurposePayload(id.toString, CREATED.toString),
         resourceId = id.toString
       )
-      conversion shouldBe Right(expected)
+      conversion shouldBe Right(expected.some)
     }
 
     "Convert agreement created message to dynamo message" in {
@@ -106,10 +107,10 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val eventId        = 1L
 
       // when
-      val conversion: Either[ComponentError, NotificationMessage] =
+      val conversion: Either[ComponentError, Option[NotificationMessage]] =
         NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
       // then
-      val expected                                                = NotificationMessage(
+      val expected                                                        = NotificationMessage(
         organizationId,
         eventId,
         messageUUID = messageId,
@@ -119,7 +120,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         payload = AgreementPayload(id.toString, UPDATED.toString),
         resourceId = id.toString
       )
-      conversion shouldBe Right(expected)
+      conversion shouldBe Right(expected.some)
     }
 
   }

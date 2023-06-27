@@ -10,6 +10,8 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import cats.syntax.all._
+
 class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with ScalaFutures {
 
   "Agreement conversions" should {
@@ -21,10 +23,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val e  = AgreementAdded(a)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.ADDED.toString))
+      conversion shouldBe Right(AgreementPayload(id.toString, EventType.ADDED.toString).some)
     }
 
     "Convert purpose deleted to event payload" in {
@@ -33,10 +35,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val e  = AgreementDeleted(id.toString)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.DELETED.toString))
+      conversion shouldBe Right(AgreementPayload(id.toString, EventType.DELETED.toString).some)
     }
 
     "Convert purpose updated to event payload" in {
@@ -46,10 +48,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val e  = AgreementUpdated(a)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString))
+      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString).some)
     }
 
     "Convert purpose activated to event payload" in {
@@ -59,10 +61,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val e  = AgreementActivated(a)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString))
+      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString).some)
     }
 
     "Convert purpose suspended to event payload" in {
@@ -72,10 +74,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val e  = AgreementSuspended(a)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString))
+      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString).some)
     }
 
     "Convert purpose deactivated to event payload" in {
@@ -85,10 +87,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val e  = AgreementDeactivated(a)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString))
+      conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString).some)
     }
 
     "Convert verified attribute updated to event payload" in {
@@ -98,7 +100,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val e  = VerifiedAttributeUpdated(a)
 
       // when
-      val conversion: Either[ComponentError, NotificationPayload] =
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
       conversion shouldBe Right(
@@ -106,7 +108,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
           id.toString,
           EventType.UPDATED.toString,
           objectType = NotificationObjectType.AGREEMENT_VERIFIED_ATTRIBUTE
-        )
+        ).some
       )
     }
 

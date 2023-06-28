@@ -2,6 +2,7 @@ package it.pagopa.interop.notifier.model
 
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.notifier.model.NotificationObjectType.{AGREEMENT, AGREEMENT_VERIFIED_ATTRIBUTE, ESERVICE, KEY, PURPOSE}
 import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
 
@@ -29,7 +30,19 @@ final case class NotificationMessage(
 )
 
 object NotificationMessage {
-  implicit val formatNotificationObjectType: DynamoFormat[NotificationObjectType] = deriveDynamoFormat
+  implicit val formatNotificationObjectType: DynamoFormat[NotificationObjectType] =
+    DynamoFormat.coercedXmap[NotificationObjectType, String, IllegalArgumentException](
+      {
+        case "AGREEMENT"                    => AGREEMENT
+        case "AGREEMENT_VERIFIED_ATTRIBUTE" => AGREEMENT_VERIFIED_ATTRIBUTE
+        case "ESERVICE"                     => ESERVICE
+        case "KEY"                          => KEY
+        case "PURPOSE"                      => PURPOSE
+        case other => throw new IllegalArgumentException(s"$other is not a NotificationObjectType")
+      },
+      _.toString
+    )
+
   implicit val formatNotificationPayload: DynamoFormat[NotificationPayload]       = deriveDynamoFormat
   implicit val formatNotificationMessage: DynamoFormat[NotificationMessage]       = deriveDynamoFormat
   def create(

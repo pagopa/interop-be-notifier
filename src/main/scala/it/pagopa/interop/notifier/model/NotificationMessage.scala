@@ -2,7 +2,13 @@ package it.pagopa.interop.notifier.model
 
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.model.NotificationObjectType.{AGREEMENT, AGREEMENT_VERIFIED_ATTRIBUTE, ESERVICE, KEY, PURPOSE}
+import it.pagopa.interop.notifier.model.NotificationObjectType.{
+  AGREEMENT,
+  AGREEMENT_VERIFIED_ATTRIBUTE,
+  ESERVICE,
+  KEY,
+  PURPOSE
+}
 import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
 
@@ -43,8 +49,8 @@ object NotificationMessage {
       _.toString
     )
 
-  implicit val formatNotificationPayload: DynamoFormat[NotificationPayload]       = deriveDynamoFormat
-  implicit val formatNotificationMessage: DynamoFormat[NotificationMessage]       = deriveDynamoFormat
+  implicit val formatNotificationPayload: DynamoFormat[NotificationPayload] = deriveDynamoFormat
+  implicit val formatNotificationMessage: DynamoFormat[NotificationMessage] = deriveDynamoFormat
   def create(
     messageId: MessageId,
     eventId: Long,

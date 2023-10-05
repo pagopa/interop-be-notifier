@@ -39,6 +39,9 @@ object CatalogEventsConverter {
       case CatalogItemDocumentDeleted(id, _, _)        => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
       case CatalogItemDescriptorAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
       case CatalogItemDescriptorUpdated(id, _)         => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      case CatalogItemRiskAnalysisAdded(c, _)          => Future.successful(MessageId(c.id, allOrganizations).some)
+      case CatalogItemRiskAnalysisDeleted(c, _)        => Future.successful(MessageId(c.id, allOrganizations).some)
+      case CatalogItemRiskAnalysisUpdated(c, _)        => Future.successful(MessageId(c.id, allOrganizations).some)
       case MovedAttributesFromEserviceToDescriptors(_) => Future.successful(None)
     }
 
@@ -64,7 +67,14 @@ object CatalogEventsConverter {
         EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), ADDED.toString).some
       case CatalogItemDescriptorUpdated(eServiceId, catalogDescriptor) =>
         EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), UPDATED.toString).some
+      case CatalogItemRiskAnalysisAdded(catalogItem, _)                =>
+        EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
+      case CatalogItemRiskAnalysisDeleted(catalogItem, _)              =>
+        EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
+      case CatalogItemRiskAnalysisUpdated(catalogItem, _)              =>
+        EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
       case MovedAttributesFromEserviceToDescriptors(_)                 => None
+
     }
 
 }

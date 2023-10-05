@@ -176,7 +176,9 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
     technology = Rest,
     attributes = None,
     descriptors = Seq.empty,
-    createdAt = OffsetDateTime.now()
+    createdAt = OffsetDateTime.now(),
+    mode = CatalogItemMode.default,
+    riskAnalysis = Seq.empty
   )
 
   private def getCatalogDescriptor(id: UUID) = CatalogDescriptor(

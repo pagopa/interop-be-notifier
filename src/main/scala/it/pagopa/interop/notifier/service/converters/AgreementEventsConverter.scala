@@ -41,29 +41,41 @@ object AgreementEventsConverter {
   }
 
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] = event match {
-    case AgreementAdded(a)       =>
-      AgreementPayload(agreementId = a.id.toString(), eventType = EventType.ADDED.toString()).some
-    case AgreementUpdated(a)     =>
+    case _: AgreementAdded                       =>
+      // Agreements are created with status Draft, and should not be notified
+      None
+    case AgreementUpdated(a)                     =>
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some
-    case AgreementDeleted(id)    => AgreementPayload(agreementId = id, eventType = EventType.DELETED.toString()).some
-    case AgreementActivated(a)   =>
+    case _: AgreementDeleted                     =>
+      // Only agreements that have never been active can be deleted
+      None
+    case AgreementActivated(a)                   =>
+      // Never used
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some
-    case AgreementSuspended(a)   =>
+    case AgreementSuspended(a)                   =>
+      // Never used
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some
-    case AgreementDeactivated(a) =>
+    case AgreementDeactivated(a)                 =>
+      // Never used
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some
     case AgreementConsumerDocumentAdded(id, _)   =>
+      // This operation can be done both on Draft and on Pending agreements.
+      // Ideally we should notify just the latter
       AgreementPayload(agreementId = id, eventType = EventType.UPDATED.toString()).some
     case AgreementConsumerDocumentRemoved(id, _) =>
+      // This operation can be done both on Draft and on Pending agreements.
+      // Ideally we should notify just the latter
       AgreementPayload(agreementId = id, eventType = EventType.UPDATED.toString()).some
     case VerifiedAttributeUpdated(a)             =>
+      // Never used
       AgreementPayload(
         agreementId = a.id.toString(),
         eventType = EventType.UPDATED.toString(),
         objectType = NotificationObjectType.AGREEMENT_VERIFIED_ATTRIBUTE
       ).some
     case AgreementContractAdded(id, _)           =>
-      AgreementPayload(agreementId = id, eventType = EventType.UPDATED.toString()).some
+      // We could identify this event as the creation of the agreement
+      AgreementPayload(agreementId = id, eventType = EventType.ADDED.toString()).some
   }
 
 }

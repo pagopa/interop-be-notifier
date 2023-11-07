@@ -18,10 +18,8 @@ final class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api:
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   private[this] def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] =
-    withHeaders { (bearerToken, correlationId, ip) =>
-      val request = api.getEService(xCorrelationId = correlationId, eServiceId.toString, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
+    withHeaders { (bearerToken, correlationId) =>
+      val request = api.getEService(xCorrelationId = correlationId, eServiceId.toString)(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving EService $eServiceId")
     }
 

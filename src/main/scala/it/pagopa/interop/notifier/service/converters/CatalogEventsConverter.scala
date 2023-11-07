@@ -50,9 +50,6 @@ object CatalogEventsConverter {
 
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] =
     event match {
-      case CatalogItemDescriptorUpdated(eserviceId, _) =>
-        // Triggered for Publish, Suspension, Activation, Archive (but also for a rollback to Draft)
-        EServicePayload(eserviceId, None, UPDATED.toString).some
       // Empty EService created, should not be notified
       case _: CatalogItemAdded                         => None
       // Creates a Draft Descriptor, should not be notified
@@ -71,8 +68,9 @@ object CatalogEventsConverter {
       case _: CatalogItemDocumentDeleted               => None
       // Creates a Drafts, should not be notified
       case _: CatalogItemDescriptorAdded               => None
-      // Only on Drafts, should not be notified
-      case _: CatalogItemDescriptorUpdated             => None
+      case CatalogItemDescriptorUpdated(eserviceId, _) =>
+        // Triggered for Publish, Suspension, Activation, Archive (but also for a rollback to Draft)
+        EServicePayload(eserviceId, None, UPDATED.toString).some
       // Only on Drafts, should not be notified
       case _: CatalogItemRiskAnalysisAdded             => None
       // Only on Drafts, should not be notified

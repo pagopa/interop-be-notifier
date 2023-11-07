@@ -8,7 +8,6 @@ import it.pagopa.interop.notifier.service.converters.EventType._
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 
 import scala.concurrent.{ExecutionContext, Future}
-import it.pagopa.interop.notifier.service.converters.allOrganizations
 import cats.syntax.all._
 
 object CatalogEventsConverter {
@@ -51,29 +50,49 @@ object CatalogEventsConverter {
 
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] =
     event match {
-      case CatalogItemAdded(catalogItem)       => EServicePayload(catalogItem.id.toString, None, ADDED.toString).some
-      case ClonedCatalogItemAdded(catalogItem) => EServicePayload(catalogItem.id.toString, None, CLONED.toString).some
-      case CatalogItemUpdated(catalogItem)     => EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
-      case CatalogItemWithDescriptorsDeleted(catalogItem, descriptorId)  =>
-        EServicePayload(catalogItem.id.toString, Some(descriptorId), DELETED.toString).some
-      case CatalogItemDocumentUpdated(eServiceId, descriptorId, _, _, _) =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString).some
-      case CatalogItemDeleted(catalogItemId) => EServicePayload(catalogItemId, None, DELETED.toString).some
-      case CatalogItemDocumentAdded(eServiceId, descriptorId, _, _, _) =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString).some
-      case CatalogItemDocumentDeleted(eServiceId, descriptorId, _)     =>
-        EServicePayload(eServiceId, Some(descriptorId), UPDATED.toString).some
-      case CatalogItemDescriptorAdded(eServiceId, catalogDescriptor)   =>
-        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), ADDED.toString).some
-      case CatalogItemDescriptorUpdated(eServiceId, catalogDescriptor) =>
-        EServicePayload(eServiceId, Some(catalogDescriptor.id.toString), UPDATED.toString).some
-      case CatalogItemRiskAnalysisAdded(catalogItem, _)                =>
-        EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
-      case CatalogItemRiskAnalysisDeleted(catalogItem, _)              =>
-        EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
-      case CatalogItemRiskAnalysisUpdated(catalogItem, _)              =>
-        EServicePayload(catalogItem.id.toString, None, UPDATED.toString).some
-      case MovedAttributesFromEserviceToDescriptors(_)                 => None
+      case CatalogItemDescriptorUpdated(eserviceId, _) =>
+        // Triggered for Publish, Suspension, Activation, Archive (but also for a rollback to Draft)
+        EServicePayload(eserviceId, None, UPDATED.toString).some
+      case _: CatalogItemAdded                         =>
+        // Empty EService created, should not be notified
+        None
+      case _: ClonedCatalogItemAdded                   =>
+        // Creates a Draft Descriptor, should not be notified
+        None
+      case _: CatalogItemUpdated                       =>
+        // Updates Drafts, should not be notified
+        None
+      case _: CatalogItemWithDescriptorsDeleted        =>
+        // Deleted Drafts, should not be notified
+        None
+      case _: CatalogItemDocumentUpdated               =>
+        // Document should be updated only on Drafts
+        None
+      case _: CatalogItemDeleted                       =>
+        // Deleted Drafts, should not be notified
+        None
+      case _: CatalogItemDocumentAdded                 =>
+        // Only on Drafts, should not be notified
+        None
+      case _: CatalogItemDocumentDeleted               =>
+        // Only on Drafts, should not be notified
+        None
+      case _: CatalogItemDescriptorAdded               =>
+        // Creates a Drafts, should not be notified
+        None
+      case _: CatalogItemDescriptorUpdated             =>
+        // Only on Drafts, should not be notified
+        None
+      case _: CatalogItemRiskAnalysisAdded             =>
+        // Only on Drafts, should not be notified
+        None
+      case _: CatalogItemRiskAnalysisDeleted           =>
+        // Only on Drafts, should not be notified
+        None
+      case _: CatalogItemRiskAnalysisUpdated           =>
+        // Only on Drafts, should not be notified
+        None
+      case _: MovedAttributesFromEserviceToDescriptors => None
 
     }
 

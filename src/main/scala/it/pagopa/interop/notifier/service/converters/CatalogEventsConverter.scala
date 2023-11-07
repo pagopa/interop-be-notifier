@@ -51,33 +51,33 @@ object CatalogEventsConverter {
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] =
     event match {
       // Empty EService created, should not be notified
-      case _: CatalogItemAdded                         => None
+      case _: CatalogItemAdded                                  => None
       // Creates a Draft Descriptor, should not be notified
-      case _: ClonedCatalogItemAdded                   => None
+      case _: ClonedCatalogItemAdded                            => None
       // Updates Drafts, should not be notified
-      case _: CatalogItemUpdated                       => None
+      case _: CatalogItemUpdated                                => None
       // Deleted Drafts, should not be notified
-      case _: CatalogItemWithDescriptorsDeleted        => None
+      case _: CatalogItemWithDescriptorsDeleted                 => None
       // Document should be updated only on Drafts
-      case _: CatalogItemDocumentUpdated               => None
+      case _: CatalogItemDocumentUpdated                        => None
       // Deleted Drafts, should not be notified
-      case _: CatalogItemDeleted                       => None
+      case _: CatalogItemDeleted                                => None
       // Only on Drafts, should not be notified
-      case _: CatalogItemDocumentAdded                 => None
+      case _: CatalogItemDocumentAdded                          => None
       // Only on Drafts, should not be notified
-      case _: CatalogItemDocumentDeleted               => None
+      case _: CatalogItemDocumentDeleted                        => None
       // Creates a Drafts, should not be notified
-      case _: CatalogItemDescriptorAdded               => None
-      case CatalogItemDescriptorUpdated(eserviceId, _) =>
+      case _: CatalogItemDescriptorAdded                        => None
+      case CatalogItemDescriptorUpdated(eserviceId, descriptor) =>
         // Triggered for Publish, Suspension, Activation, Archive (but also for a rollback to Draft)
-        EServicePayload(eserviceId, None, UPDATED.toString).some
+        EServicePayload(eserviceId, descriptor.id.toString.some, UPDATED.toString).some
       // Only on Drafts, should not be notified
-      case _: CatalogItemRiskAnalysisAdded             => None
+      case _: CatalogItemRiskAnalysisAdded                      => None
       // Only on Drafts, should not be notified
-      case _: CatalogItemRiskAnalysisDeleted           => None
+      case _: CatalogItemRiskAnalysisDeleted                    => None
       // Only on Drafts, should not be notified
-      case _: CatalogItemRiskAnalysisUpdated           => None
-      case _: MovedAttributesFromEserviceToDescriptors => None
+      case _: CatalogItemRiskAnalysisUpdated                    => None
+      case _: MovedAttributesFromEserviceToDescriptors          => None
 
     }
 

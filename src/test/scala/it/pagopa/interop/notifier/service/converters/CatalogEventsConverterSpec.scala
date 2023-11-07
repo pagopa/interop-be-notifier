@@ -1,7 +1,7 @@
 package it.pagopa.interop.notifier.service.converters
 
-import it.pagopa.interop.catalogmanagement.model.persistence._
 import it.pagopa.interop.catalogmanagement.model._
+import it.pagopa.interop.catalogmanagement.model.persistence._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{EServicePayload, NotificationPayload}
 import org.scalatest.concurrent.ScalaFutures
@@ -26,7 +26,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(EServicePayload(id.toString, None, EventType.ADDED.toString).some)
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog cloned to event payload" in {
@@ -39,7 +39,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(EServicePayload(id.toString, None, EventType.CLONED.toString).some)
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog updated to event payload" in {
@@ -52,7 +52,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(EServicePayload(id.toString, None, EventType.UPDATED.toString).some)
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog with descriptor delete to event payload" in {
@@ -66,9 +66,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(
-        EServicePayload(id.toString, Some(descriptorId.toString), EventType.DELETED.toString).some
-      )
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog document updated to event payload" in {
@@ -83,9 +81,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(
-        EServicePayload(id.toString, Some(descriptorId.toString), EventType.UPDATED.toString).some
-      )
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog deleted to event payload" in {
@@ -98,7 +94,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(EServicePayload(id.toString, None, EventType.DELETED.toString).some)
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog document added to event payload" in {
@@ -113,9 +109,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(
-        EServicePayload(id.toString, Some(descriptorId.toString), EventType.UPDATED.toString).some
-      )
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog document deleted to event payload" in {
@@ -129,9 +123,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(
-        EServicePayload(id.toString, Some(descriptorId.toString), EventType.UPDATED.toString).some
-      )
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog descriptor added to event payload" in {
@@ -145,9 +137,7 @@ class CatalogEventsConverterSpec extends AnyWordSpecLike with Matchers with Scal
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         CatalogEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(
-        EServicePayload(id.toString, Some(descriptorId.toString), EventType.ADDED.toString).some
-      )
+      conversion shouldBe Right(None)
     }
 
     "Convert catalog descriptor updated to event payload" in {

@@ -1,18 +1,18 @@
 package it.pagopa.interop.notifier.model
 
+import cats.syntax.all._
 import it.pagopa.interop.agreementmanagement.model.agreement.{Active, PersistentAgreement, PersistentStamps}
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementActivated
 import it.pagopa.interop.commons.queue.message.Message
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.notifier.service.converters.EventType.{CREATED, UPDATED}
-import it.pagopa.interop.purposemanagement.model.persistence.PurposeCreated
+import it.pagopa.interop.notifier.service.converters.EventType.{ACTIVATED, UPDATED}
+import it.pagopa.interop.purposemanagement.model.persistence.PurposeVersionActivated
 import it.pagopa.interop.purposemanagement.model.purpose.PersistentPurpose
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.time.OffsetDateTime
 import java.util.UUID
-import cats.syntax.all._
 
 class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
@@ -41,7 +41,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         isFreeOfCharge = true,
         freeOfChargeReason = Some("BOH")
       )
-      val event = PurposeCreated(pp)
+      val event = PurposeVersionActivated(pp)
 
       val message =
         Message(messageId, eventJournalPersistenceId, eventJournalSequenceNumber, eventTimestamp, kind, payload = event)
@@ -60,7 +60,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         eventJournalPersistenceId = eventJournalPersistenceId,
         eventJournalSequenceNumber = eventJournalSequenceNumber,
         eventTimestamp = eventTimestamp,
-        payload = PurposePayload(id.toString, CREATED.toString),
+        payload = PurposePayload(id.toString, ACTIVATED.toString),
         resourceId = id.toString
       )
       conversion shouldBe Right(expected.some)

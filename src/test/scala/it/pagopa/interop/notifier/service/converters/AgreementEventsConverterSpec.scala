@@ -16,7 +16,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
 
   "Agreement conversions" should {
 
-    "Convert purpose created to event payload" in {
+    "Convert agreement created to event payload" in {
       // given
       val id = UUID.randomUUID()
       val a  = getAgreement(id)
@@ -26,10 +26,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.ADDED.toString).some)
+      conversion shouldBe Right(None)
     }
 
-    "Convert purpose deleted to event payload" in {
+    "Convert agreement deleted to event payload" in {
       // given
       val id = UUID.randomUUID()
       val e  = AgreementDeleted(id.toString)
@@ -38,10 +38,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       val conversion: Either[ComponentError, Option[NotificationPayload]] =
         AgreementEventsConverter.asNotificationPayload(e)
       // then
-      conversion shouldBe Right(AgreementPayload(id.toString, EventType.DELETED.toString).some)
+      conversion shouldBe Right(None)
     }
 
-    "Convert purpose updated to event payload" in {
+    "Convert agreement updated to event payload" in {
       // given
       val id = UUID.randomUUID()
       val a  = getAgreement(id)
@@ -54,7 +54,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString).some)
     }
 
-    "Convert purpose activated to event payload" in {
+    "Convert agreement activated to event payload" in {
       // given
       val id = UUID.randomUUID()
       val a  = getAgreement(id)
@@ -67,7 +67,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString).some)
     }
 
-    "Convert purpose suspended to event payload" in {
+    "Convert agreement suspended to event payload" in {
       // given
       val id = UUID.randomUUID()
       val a  = getAgreement(id)
@@ -80,7 +80,7 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
       conversion shouldBe Right(AgreementPayload(id.toString, EventType.UPDATED.toString).some)
     }
 
-    "Convert purpose deactivated to event payload" in {
+    "Convert agreement deactivated to event payload" in {
       // given
       val id = UUID.randomUUID()
       val a  = getAgreement(id)

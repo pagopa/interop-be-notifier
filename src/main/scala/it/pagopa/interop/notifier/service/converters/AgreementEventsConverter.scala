@@ -41,14 +41,12 @@ object AgreementEventsConverter {
   }
 
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] = event match {
-    case _: AgreementAdded                       =>
-      // Agreements are created with status Draft, and should not be notified
-      None
+    // Agreements are created with status Draft, and should not be notified
+    case _: AgreementAdded                       => None
     case AgreementUpdated(a)                     =>
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some
-    case _: AgreementDeleted                     =>
-      // Only agreements that have never been active can be deleted
-      None
+    // Only agreements that have never been active can be deleted
+    case _: AgreementDeleted                     => None
     case AgreementActivated(a)                   =>
       // Never used
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some

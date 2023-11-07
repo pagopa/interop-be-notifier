@@ -57,28 +57,22 @@ object PurposeEventsConverter {
 
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] =
     event match {
-      case _: PurposeCreated                        =>
-        // Creates Drafts, should not be notified
-        None
-      case _: PurposeUpdated                        =>
-        // Only on Drafts, should not be notified
-        None
-      case _: PurposeVersionCreated                 =>
-        // Creates Drafts, should not be notified
-        None
+      // Creates Drafts, should not be notified
+      case _: PurposeCreated                        => None
+      // Only on Drafts, should not be notified
+      case _: PurposeUpdated                        => None
+      // Creates Drafts, should not be notified
+      case _: PurposeVersionCreated                 => None
       case PurposeVersionActivated(purpose)         => PurposePayload(purpose.id.toString(), ACTIVATED.toString()).some
       case PurposeVersionSuspended(purpose)         => PurposePayload(purpose.id.toString(), SUSPENDED.toString()).some
       case PurposeVersionWaitedForApproval(purpose) =>
         PurposePayload(purpose.id.toString(), WAITING_FOR_APPROVAL.toString).some
       case PurposeVersionArchived(purpose)          => PurposePayload(purpose.id.toString(), ARCHIVED.toString()).some
-      case _: PurposeVersionUpdated                 =>
-        // Only on Drafts, should not be notified
-        None
-      case _: PurposeVersionDeleted                 =>
-        // Only on Drafts, should not be notified
-        None
-      case _: PurposeDeleted                        =>
-        // Only on Drafts, should not be notified
-        None
+      // Only on Drafts, should not be notified
+      case _: PurposeVersionUpdated                 => None
+      // Only on Drafts, should not be notified
+      case _: PurposeVersionDeleted                 => None
+      // Only on Drafts, should not be notified
+      case _: PurposeDeleted                        => None
     }
 }

@@ -53,45 +53,32 @@ object CatalogEventsConverter {
       case CatalogItemDescriptorUpdated(eserviceId, _) =>
         // Triggered for Publish, Suspension, Activation, Archive (but also for a rollback to Draft)
         EServicePayload(eserviceId, None, UPDATED.toString).some
-      case _: CatalogItemAdded                         =>
-        // Empty EService created, should not be notified
-        None
-      case _: ClonedCatalogItemAdded                   =>
-        // Creates a Draft Descriptor, should not be notified
-        None
-      case _: CatalogItemUpdated                       =>
-        // Updates Drafts, should not be notified
-        None
-      case _: CatalogItemWithDescriptorsDeleted        =>
-        // Deleted Drafts, should not be notified
-        None
-      case _: CatalogItemDocumentUpdated               =>
-        // Document should be updated only on Drafts
-        None
-      case _: CatalogItemDeleted                       =>
-        // Deleted Drafts, should not be notified
-        None
-      case _: CatalogItemDocumentAdded                 =>
-        // Only on Drafts, should not be notified
-        None
-      case _: CatalogItemDocumentDeleted               =>
-        // Only on Drafts, should not be notified
-        None
-      case _: CatalogItemDescriptorAdded               =>
-        // Creates a Drafts, should not be notified
-        None
-      case _: CatalogItemDescriptorUpdated             =>
-        // Only on Drafts, should not be notified
-        None
-      case _: CatalogItemRiskAnalysisAdded             =>
-        // Only on Drafts, should not be notified
-        None
-      case _: CatalogItemRiskAnalysisDeleted           =>
-        // Only on Drafts, should not be notified
-        None
-      case _: CatalogItemRiskAnalysisUpdated           =>
-        // Only on Drafts, should not be notified
-        None
+      // Empty EService created, should not be notified
+      case _: CatalogItemAdded                         => None
+      // Creates a Draft Descriptor, should not be notified
+      case _: ClonedCatalogItemAdded                   => None
+      // Updates Drafts, should not be notified
+      case _: CatalogItemUpdated                       => None
+      // Deleted Drafts, should not be notified
+      case _: CatalogItemWithDescriptorsDeleted        => None
+      // Document should be updated only on Drafts
+      case _: CatalogItemDocumentUpdated               => None
+      // Deleted Drafts, should not be notified
+      case _: CatalogItemDeleted                       => None
+      // Only on Drafts, should not be notified
+      case _: CatalogItemDocumentAdded                 => None
+      // Only on Drafts, should not be notified
+      case _: CatalogItemDocumentDeleted               => None
+      // Creates a Drafts, should not be notified
+      case _: CatalogItemDescriptorAdded               => None
+      // Only on Drafts, should not be notified
+      case _: CatalogItemDescriptorUpdated             => None
+      // Only on Drafts, should not be notified
+      case _: CatalogItemRiskAnalysisAdded             => None
+      // Only on Drafts, should not be notified
+      case _: CatalogItemRiskAnalysisDeleted           => None
+      // Only on Drafts, should not be notified
+      case _: CatalogItemRiskAnalysisUpdated           => None
       case _: MovedAttributesFromEserviceToDescriptors => None
 
     }

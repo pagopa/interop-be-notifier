@@ -57,16 +57,22 @@ object PurposeEventsConverter {
 
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] =
     event match {
-      case PurposeCreated(purpose)                  => PurposePayload(purpose.id.toString(), CREATED.toString()).some
-      case PurposeUpdated(purpose)                  => PurposePayload(purpose.id.toString(), UPDATED.toString()).some
-      case PurposeVersionCreated(purposeId, _)      => PurposePayload(purposeId, CREATED.toString).some
+      // Creates Drafts, should not be notified
+      case _: PurposeCreated                        => None
+      // Only on Drafts, should not be notified
+      case _: PurposeUpdated                        => None
+      // Creates Drafts, should not be notified
+      case _: PurposeVersionCreated                 => None
       case PurposeVersionActivated(purpose)         => PurposePayload(purpose.id.toString(), ACTIVATED.toString()).some
       case PurposeVersionSuspended(purpose)         => PurposePayload(purpose.id.toString(), SUSPENDED.toString()).some
       case PurposeVersionWaitedForApproval(purpose) =>
         PurposePayload(purpose.id.toString(), WAITING_FOR_APPROVAL.toString).some
       case PurposeVersionArchived(purpose)          => PurposePayload(purpose.id.toString(), ARCHIVED.toString()).some
-      case PurposeVersionUpdated(purposeId, _)      => PurposePayload(purposeId, UPDATED.toString()).some
-      case PurposeVersionDeleted(purposeId, _)      => PurposePayload(purposeId, DELETED.toString()).some
-      case PurposeDeleted(purposeId)                => PurposePayload(purposeId, DELETED.toString()).some
+      // Only on Drafts, should not be notified
+      case _: PurposeVersionUpdated                 => None
+      // Only on Drafts, should not be notified
+      case _: PurposeVersionDeleted                 => None
+      // Only on Drafts, should not be notified
+      case _: PurposeDeleted                        => None
     }
 }

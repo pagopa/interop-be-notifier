@@ -10,7 +10,7 @@ import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.errors.ServiceCode
 import it.pagopa.interop.notifier.api.EventsApiService
 import it.pagopa.interop.notifier.api.impl.ResponseHandlers.{
-  getAllEventsFromIdResponse,
+  getAllEservicesFromIdResponse,
   getEventsFromIdResponse,
   getKeyEventsResponse,
   getAllAgreementsEventsFromIdResponse
@@ -64,7 +64,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     }
   }
 
-  override def getAllEventsFromId(lastEventId: Long, limit: Int)(implicit
+  override def getAllEservicesFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -75,7 +75,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     val result: Future[Events] = getEvents(allOrganizations, limit, lastEventId)
 
     onComplete(result) {
-      getAllEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)
+      getAllEservicesFromIdResponse[Events](operationLabel)(getAllEservicesFromId200)
     }
   }
 

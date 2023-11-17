@@ -23,19 +23,19 @@ object AgreementEventsConverter {
   ): Future[Seq[MessageId]] = event match {
     case AgreementAdded(a)                       => 
       val messageId = MessageId(a.id, a.producerId.toString())
-      val messageAgreements = MessageId(a.id, agreements.toString())
+      val messageAgreements = MessageId(a.id, agreements)
       for {
       _ <- dynamoService.put(messageId)
       _ <-  dynamoService.put(messageAgreements)
     } yield Seq(messageId, messageAgreements)
     case AgreementDeleted(id)                    => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
-    case AgreementUpdated(a)                     => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements.toString())))
+    case AgreementUpdated(a)                     => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements)))
     case AgreementConsumerDocumentAdded(id, _)   => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
     case AgreementConsumerDocumentRemoved(id, _) => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
-    case VerifiedAttributeUpdated(a)             => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements.toString())))
-    case AgreementActivated(a)                   => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements.toString())))
-    case AgreementSuspended(a)                   => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements.toString())))
-    case AgreementDeactivated(a)                 => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements.toString())))
+    case VerifiedAttributeUpdated(a)             => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements)))
+    case AgreementActivated(a)                   => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements)))
+    case AgreementSuspended(a)                   => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements)))
+    case AgreementDeactivated(a)                 => Future.successful(Seq(MessageId(a.id, a.producerId.toString()), MessageId(a.id, agreements)))
     case AgreementContractAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
   }
 

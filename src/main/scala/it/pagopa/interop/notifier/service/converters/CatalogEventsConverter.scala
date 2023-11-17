@@ -15,33 +15,33 @@ object CatalogEventsConverter {
   def getMessageId(dynamoService: DynamoNotificationResourcesService)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): PartialFunction[ProjectableEvent, Future[Option[MessageId]]] = { case e: Event =>
+  ): PartialFunction[ProjectableEvent, Future[Seq[MessageId]]] = { case e: Event =>
     getMessageIdFromEvent(dynamoService, e)
   }
 
   private[this] def getMessageIdFromEvent(dynamoService: DynamoNotificationResourcesService, event: Event)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): Future[Option[MessageId]] =
+  ): Future[Seq[MessageId]] =
     event match {
       case CatalogItemAdded(c)                         =>
         val messageId: MessageId = MessageId(c.id, allOrganizations)
-        dynamoService.put(messageId).map(_ => messageId.some)
+        dynamoService.put(messageId).map(_ => Seq(messageId))
       case ClonedCatalogItemAdded(c)                   =>
         val messageId: MessageId = MessageId(c.id, allOrganizations)
-        dynamoService.put(messageId).map(_ => messageId.some)
-      case CatalogItemUpdated(c)                       => Future.successful(MessageId(c.id, allOrganizations).some)
-      case CatalogItemWithDescriptorsDeleted(c, _)     => Future.successful(MessageId(c.id, allOrganizations).some)
-      case CatalogItemDocumentUpdated(id, _, _, _, _)  => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-      case CatalogItemDeleted(id)                      => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-      case CatalogItemDocumentAdded(id, _, _, _, _)    => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-      case CatalogItemDocumentDeleted(id, _, _)        => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-      case CatalogItemDescriptorAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-      case CatalogItemDescriptorUpdated(id, _)         => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-      case CatalogItemRiskAnalysisAdded(c, _)          => Future.successful(MessageId(c.id, allOrganizations).some)
-      case CatalogItemRiskAnalysisDeleted(c, _)        => Future.successful(MessageId(c.id, allOrganizations).some)
-      case CatalogItemRiskAnalysisUpdated(c, _)        => Future.successful(MessageId(c.id, allOrganizations).some)
-      case MovedAttributesFromEserviceToDescriptors(_) => Future.successful(None)
+        dynamoService.put(messageId).map(_ => Seq(messageId))
+      case CatalogItemUpdated(c)                       => Future.successful(Seq(MessageId(c.id, allOrganizations)))
+      case CatalogItemWithDescriptorsDeleted(c, _)     => Future.successful(Seq(MessageId(c.id, allOrganizations)))
+      case CatalogItemDocumentUpdated(id, _, _, _, _)  => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+      case CatalogItemDeleted(id)                      => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+      case CatalogItemDocumentAdded(id, _, _, _, _)    => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+      case CatalogItemDocumentDeleted(id, _, _)        => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+      case CatalogItemDescriptorAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+      case CatalogItemDescriptorUpdated(id, _)         => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+      case CatalogItemRiskAnalysisAdded(c, _)          => Future.successful(Seq(MessageId(c.id, allOrganizations)))
+      case CatalogItemRiskAnalysisDeleted(c, _)        => Future.successful(Seq(MessageId(c.id, allOrganizations)))
+      case CatalogItemRiskAnalysisUpdated(c, _)        => Future.successful(Seq(MessageId(c.id, allOrganizations)))
+      case MovedAttributesFromEserviceToDescriptors(_) => Future.successful(Seq())
     }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, Option[NotificationPayload]]] = {

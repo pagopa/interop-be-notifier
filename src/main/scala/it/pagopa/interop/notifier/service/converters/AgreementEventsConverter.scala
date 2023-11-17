@@ -13,26 +13,26 @@ object AgreementEventsConverter {
   def getMessageId(dynamoService: DynamoNotificationResourcesService)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): PartialFunction[ProjectableEvent, Future[Option[MessageId]]] = { case e: Event =>
+  ): PartialFunction[ProjectableEvent, Future[Seq[MessageId]]] = { case e: Event =>
     getMessageIdFromEvent(dynamoService, e)
   }
 
   private[this] def getMessageIdFromEvent(dynamoService: DynamoNotificationResourcesService, event: Event)(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): Future[Option[MessageId]] = event match {
+  ): Future[Seq[MessageId]] = event match {
     case AgreementAdded(a)                       =>
       val messageId: MessageId = MessageId(a.id, a.producerId.toString())
-      dynamoService.put(messageId).map(_ => messageId.some)
-    case AgreementDeleted(id)                    => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-    case AgreementUpdated(a)                     => Future.successful(MessageId(a.id, a.producerId.toString()).some)
-    case AgreementConsumerDocumentAdded(id, _)   => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-    case AgreementConsumerDocumentRemoved(id, _) => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
-    case VerifiedAttributeUpdated(a)             => Future.successful(MessageId(a.id, a.producerId.toString()).some)
-    case AgreementActivated(a)                   => Future.successful(MessageId(a.id, a.producerId.toString()).some)
-    case AgreementSuspended(a)                   => Future.successful(MessageId(a.id, a.producerId.toString()).some)
-    case AgreementDeactivated(a)                 => Future.successful(MessageId(a.id, a.producerId.toString()).some)
-    case AgreementContractAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
+      dynamoService.put(messageId).map(_ => Seq(messageId))
+    case AgreementDeleted(id)                    => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+    case AgreementUpdated(a)                     => Future.successful(Seq(MessageId(a.id, a.producerId.toString())))
+    case AgreementConsumerDocumentAdded(id, _)   => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+    case AgreementConsumerDocumentRemoved(id, _) => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
+    case VerifiedAttributeUpdated(a)             => Future.successful(Seq(MessageId(a.id, a.producerId.toString())))
+    case AgreementActivated(a)                   => Future.successful(Seq(MessageId(a.id, a.producerId.toString())))
+    case AgreementSuspended(a)                   => Future.successful(Seq(MessageId(a.id, a.producerId.toString())))
+    case AgreementDeactivated(a)                 => Future.successful(Seq(MessageId(a.id, a.producerId.toString())))
+    case AgreementContractAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(Seq(_))
   }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, Option[NotificationPayload]]] = {

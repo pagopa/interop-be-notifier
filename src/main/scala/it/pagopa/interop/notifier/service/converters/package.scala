@@ -15,8 +15,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object converters {
 
-  final val allOrganizations: String = "all_organizations"
-  final val agreements: String       = "agreements"
+  final val allOrganizations: String    = "all_organizations"
+  final val agreementsPartition: String = "agreements"
 
   def notFoundRecipient: Message => Future[Unit] = message =>
     Future.failed(MessageRecipientNotFound(message.payload.getClass.getName))

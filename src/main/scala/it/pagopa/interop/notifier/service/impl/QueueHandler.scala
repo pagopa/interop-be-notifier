@@ -1,7 +1,6 @@
 package it.pagopa.interop.notifier.service.impl
 
 import com.typesafe.scalalogging.Logger
-import cats.syntax.all._
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.interop.commons.queue.message.{Message, ProjectableEvent}
@@ -51,31 +50,25 @@ final class QueueHandler(
 
   private def dynamoFlow: Seq[(String, String)] => PartialFunction[Message, Future[Unit]] = contexts =>
     Function.unlift({ msg: Message =>
-      implicit val ctx: Seq[(String, String)] = contexts
-
-      val getMessages: PartialFunction[ProjectableEvent, Future[Seq[MessageId]]] =
+      implicit val ctx: Seq[(String, String)]                                        = contexts
+      val getMessageId: PartialFunction[ProjectableEvent, Future[Option[MessageId]]] =
         PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse
           AgreementEventsConverter.getMessageId(dynamoIndexService) orElse
           CatalogEventsConverter.getMessageId(dynamoIndexService)
 
-      def process(messageId: MessageId): Future[Unit] = {
-        logger.debug(s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}")
-        for {
-          nextEvent <- idRetriever.getNextEventIdForOrganization(messageId.organizationId)(contexts)
-          _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
-          notificationMessage <- NotificationMessage.create(messageId, nextEvent.eventId, msg).toFuture
-          ()                  <- notificationMessage.fold(Future.unit)(dynamoNotificationService.put)
-          _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
-        } yield ()
-      }
-
-      val flow: PartialFunction[ProjectableEvent, Future[Unit]] = getMessages
-        .andThen { messages =>
-          for {
-            messages <- messages
-            _        <- messages.traverse(process)
-          } yield ()
-        }
+      val flow: PartialFunction[ProjectableEvent, Future[Unit]] = getMessageId
+        .andThen(_.flatMap {
+          case Some(messageId) =>
+            logger.debug(s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}")
+            for {
+              nextEvent <- idRetriever.getNextEventIdForOrganization(messageId.organizationId)(contexts)
+              _ = logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
+              notificationMessage <- NotificationMessage.create(messageId, nextEvent.eventId, msg).toFuture
+              ()                  <- notificationMessage.fold(Future.unit)(dynamoNotificationService.put)
+              _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
+            } yield ()
+          case None            => Future.unit
+        })
 
       flow.lift(msg.payload)
     })

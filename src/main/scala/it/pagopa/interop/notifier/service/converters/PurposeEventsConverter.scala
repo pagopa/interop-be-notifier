@@ -18,7 +18,7 @@ object PurposeEventsConverter {
   )(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
-  ): PartialFunction[ProjectableEvent, Future[Seq[MessageId]]] = { case e: Event =>
+  ): PartialFunction[ProjectableEvent, Future[Option[MessageId]]] = { case e: Event =>
     getMessageIdFromEvent(catalogManagementService, dynamoIndexService, e)
   }
 
@@ -26,7 +26,7 @@ object PurposeEventsConverter {
     catalogManagementService: CatalogManagementService,
     dynamoIndexService: DynamoNotificationResourcesService,
     event: Event
-  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[Seq[MessageId]] =
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[Option[MessageId]] =
     event match {
       case PurposeCreated(purpose) =>
         for {
@@ -34,20 +34,20 @@ object PurposeEventsConverter {
             .getEServiceProducerByEServiceId(purpose.eserviceId)
             .map(organizationId => MessageId(purpose.id, organizationId.toString()))
           _         <- dynamoIndexService.put(messageId)
-        } yield Seq(messageId)
-      case PurposeUpdated(purpose) => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(Seq(_))
-      case PurposeVersionCreated(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(Seq(_))
+        } yield messageId.some
+      case PurposeUpdated(purpose) => getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(_.some)
+      case PurposeVersionCreated(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(_.some)
       case PurposeVersionActivated(purpose)         =>
-        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(Seq(_))
+        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(_.some)
       case PurposeVersionSuspended(purpose)         =>
-        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(Seq(_))
+        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(_.some)
       case PurposeVersionWaitedForApproval(purpose) =>
-        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(Seq(_))
+        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(_.some)
       case PurposeVersionArchived(purpose)          =>
-        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(Seq(_))
-      case PurposeVersionUpdated(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(Seq(_))
-      case PurposeVersionDeleted(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(Seq(_))
-      case PurposeDeleted(purposeId)                => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(Seq(_))
+        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString()).map(_.some)
+      case PurposeVersionUpdated(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(_.some)
+      case PurposeVersionDeleted(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(_.some)
+      case PurposeDeleted(purposeId)                => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(_.some)
     }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, Option[NotificationPayload]]] = {

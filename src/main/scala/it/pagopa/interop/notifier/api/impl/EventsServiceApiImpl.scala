@@ -40,10 +40,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     val operationLabel = s"Retrieving $limit messages from id $lastEventId for partition "
     logger.info(operationLabel)
 
-    val result: Future[Events] = for {
-      organizationId <- getOrganizationIdFutureUUID(contexts)
-      events         <- getEvents(Seq(organizationId.toString, agreements).mkString(separator), limit, lastEventId)
-    } yield events
+    val result: Future[Events] = getEvents(agreements, limit, lastEventId)  
 
     onComplete(result) {
       getAllAgreementsEventsFromIdResponse[Events](operationLabel)(getAllAgreementsEventsFromId200)

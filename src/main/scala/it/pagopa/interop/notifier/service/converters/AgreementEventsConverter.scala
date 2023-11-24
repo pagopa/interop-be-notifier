@@ -5,9 +5,9 @@ import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{AgreementPayload, MessageId, NotificationObjectType, NotificationPayload}
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import cats.syntax.all._
+import it.pagopa.interop.notifier.service.converters.agreementsPartition
 
 import scala.concurrent.{ExecutionContext, Future}
-import it.pagopa.interop.notifier.service.converters.agreements
 
 object AgreementEventsConverter {
 
@@ -23,21 +23,21 @@ object AgreementEventsConverter {
     contexts: Seq[(String, String)]
   ): Future[Option[MessageId]] = event match {
     case AgreementAdded(a)                       =>
-      val messageId: MessageId = MessageId(a.id, Seq(a.producerId.toString(), agreements).mkString(separator))
+      val messageId: MessageId = MessageId(a.id, Seq(a.producerId.toString(), agreementsPartition).mkString(separator))
       dynamoService.put(messageId).map(_ => messageId.some)
     case AgreementDeleted(id)                    => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
     case AgreementUpdated(a)                     =>
-      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreements).mkString(separator)).some)
+      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreementsPartition).mkString(separator)).some)
     case AgreementConsumerDocumentAdded(id, _)   => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
     case AgreementConsumerDocumentRemoved(id, _) => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
     case VerifiedAttributeUpdated(a)             =>
-      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreements).mkString(separator)).some)
+      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreementsPartition).mkString(separator)).some)
     case AgreementActivated(a)                   =>
-      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreements).mkString(separator)).some)
+      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreementsPartition).mkString(separator)).some)
     case AgreementSuspended(a)                   =>
-      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreements).mkString(separator)).some)
+      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreementsPartition).mkString(separator)).some)
     case AgreementDeactivated(a)                 =>
-      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreements).mkString(separator)).some)
+      Future.successful(MessageId(a.id, Seq(a.producerId.toString(), agreementsPartition).mkString(separator)).some)
     case AgreementContractAdded(id, _)           => getMessageIdFromDynamo(dynamoService)(id).map(_.some)
   }
 

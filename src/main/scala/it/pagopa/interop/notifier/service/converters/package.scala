@@ -15,8 +15,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object converters {
 
-  final val allOrganizations: String = "all_organizations"
-  final val agreements: String       = "agreements"
+  final val allOrganizations: String    = "all_organizations"
+  final val agreementsPartition: String = "agreements"
   final val separator: String        = ","
 
   def notFoundRecipient: Message => Future[Unit] = message =>

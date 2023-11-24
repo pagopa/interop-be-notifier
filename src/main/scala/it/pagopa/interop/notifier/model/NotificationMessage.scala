@@ -13,7 +13,6 @@ import org.scanamo.DynamoFormat
 import org.scanamo.generic.semiauto.deriveDynamoFormat
 
 import java.util.UUID
-import it.pagopa.interop.notifier.service.converters.separator
 
 /**
   * Models data to be saved on Dynamo
@@ -52,26 +51,26 @@ object NotificationMessage {
 
   implicit val formatNotificationPayload: DynamoFormat[NotificationPayload] = deriveDynamoFormat
   implicit val formatNotificationMessage: DynamoFormat[NotificationMessage] = deriveDynamoFormat
-  def create(messageId: MessageId, eventId: Long, message: Message): Either[ComponentError, List[NotificationMessage]] =
+  def create(
+    resourceId: UUID,
+    organizationId: String,
+    eventId: Long,
+    message: Message
+  ): Either[ComponentError, Option[NotificationMessage]] =
     NotificationPayload
       .create(message.payload)
       .map(
-        _.fold(List[NotificationMessage]())(p =>
-          messageId.organizationId
-            .split(separator)
-            .toList
-            .map(organization =>
-              NotificationMessage(
-                organizationId = organization,
-                eventId = eventId,
-                messageUUID = message.messageUUID,
-                eventJournalPersistenceId = message.eventJournalPersistenceId,
-                eventJournalSequenceNumber = message.eventJournalSequenceNumber,
-                eventTimestamp = message.eventTimestamp,
-                resourceId = messageId.resourceId.toString,
-                payload = p
-              )
-            )
+        _.map(p =>
+          NotificationMessage(
+            organizationId = organizationId,
+            eventId = eventId,
+            messageUUID = message.messageUUID,
+            eventJournalPersistenceId = message.eventJournalPersistenceId,
+            eventJournalSequenceNumber = message.eventJournalSequenceNumber,
+            eventTimestamp = message.eventTimestamp,
+            resourceId = resourceId.toString,
+            payload = p
+          )
         )
       )
 }

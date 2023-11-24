@@ -49,10 +49,10 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val eventId        = 1L
 
       // when
-      val conversion: Either[ComponentError, List[NotificationMessage]] =
-        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+      val conversion: Either[ComponentError, Option[NotificationMessage]] =
+        NotificationMessage.create(resourceId = id, organizationId = organizationId, eventId, message)
       // then
-      val expected                                                      = NotificationMessage(
+      val expected                                                        = NotificationMessage(
         organizationId,
         eventId,
         messageUUID = messageId,
@@ -62,7 +62,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         payload = PurposePayload(id.toString, ACTIVATED.toString),
         resourceId = id.toString
       )
-      conversion shouldBe Right(List(expected))
+      conversion shouldBe Right(Option(expected))
     }
 
     "Convert agreement created message to dynamo message" in {
@@ -106,10 +106,10 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
       val eventId        = 1L
 
       // when
-      val conversion: Either[ComponentError, List[NotificationMessage]] =
-        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+      val conversion: Either[ComponentError, Option[NotificationMessage]] =
+        NotificationMessage.create(resourceId = id, organizationId = organizationId, eventId, message)
       // then
-      val expected                                                      = NotificationMessage(
+      val expected                                                        = NotificationMessage(
         organizationId,
         eventId,
         messageUUID = messageId,
@@ -119,7 +119,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         payload = AgreementPayload(id.toString, UPDATED.toString),
         resourceId = id.toString
       )
-      conversion shouldBe Right(List(expected))
+      conversion shouldBe Right(Option(expected))
     }
 
   }

@@ -59,10 +59,10 @@ final class QueueHandler(
           AgreementEventsConverter.getMessageId(dynamoIndexService) orElse
           CatalogEventsConverter.getMessageId(dynamoIndexService)
 
-      def process(nextEvent: PersistentOrganizationEvent, messageId: MessageId): Future[Unit] = {
+      def process(nextEvent: PersistentOrganizationEvent, resourceId: UUID, organizationId: String): Future[Unit] = {
         logger.debug(s"Next event id for organization ${nextEvent.organizationId} -> ${nextEvent.eventId}")
         for {
-          notificationMessage <- NotificationMessage.create(messageId, nextEvent.eventId, msg).toFuture
+          notificationMessage <- NotificationMessage.create(resourceId, organizationId, nextEvent.eventId, msg).toFuture
           _                   <- notificationMessage.traverse(dynamoNotificationService.put)
           _ = logger.debug(s"Message ${msg.messageUUID.toString} was successfully written to dynamodb")
         } yield ()
@@ -72,13 +72,15 @@ final class QueueHandler(
         .andThen(_.flatMap {
           case Some(messageId) =>
             logger.debug(s"Organization id retrieved for message  ${msg.messageUUID} -> ${messageId.organizationId}")
-            for {
-              events <- messageId.organizationId
-                .split(separator)
-                .toList
-                .traverse(idRetriever.getNextEventIdForOrganization)
-              _      <- events.traverse(nextEvent => process(nextEvent, messageId))
-            } yield ()
+            messageId.organizationId
+              .split(separator)
+              .toList
+              .traverse { orgId =>
+                idRetriever
+                  .getNextEventIdForOrganization(orgId)
+                  .flatMap(nextEvent => process(nextEvent, messageId.resourceId, orgId))
+              }
+              .map(_ => ())
           case None            => Future.unit
         })
 

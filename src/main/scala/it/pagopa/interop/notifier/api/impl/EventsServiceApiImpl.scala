@@ -18,7 +18,7 @@ import it.pagopa.interop.notifier.api.impl.ResponseHandlers.{
 import it.pagopa.interop.notifier.database.{AuthorizationEventsDao, KeyEventRecord}
 import it.pagopa.interop.notifier.model._
 import it.pagopa.interop.notifier.model.Adapters._
-import it.pagopa.interop.notifier.service.converters.{allOrganizations, agreements}
+import it.pagopa.interop.notifier.service.converters.{allOrganizations, agreementsPartition}
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,10 +36,10 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize(M2M_ROLE) {
-    val operationLabel = s"Retrieving $limit messages from id $lastEventId for partition "
+    val operationLabel = s"Retrieving $limit messages from id $lastEventId for partition $agreementsPartition"
     logger.info(operationLabel)
 
-    val result: Future[Events] = getEvents(agreements, limit, lastEventId)
+    val result: Future[Events] = getEvents(agreementsPartition, limit, lastEventId)
 
     onComplete(result) {
       getAllAgreementsEventsFromIdResponse[Events](operationLabel)(getAllAgreementsEventsFromId200)

@@ -89,7 +89,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/all/events':
+  '/events/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
@@ -98,7 +98,7 @@ paths:
         - events
       summary: Get list of events from all organizations partition
       description: Retrieves the list of events from all organizations partition
-      operationId: getAllEventsFromId
+      operationId: getAllEservicesFromId
       parameters:
         - name: lastEventId
           in: query

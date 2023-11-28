@@ -52,7 +52,8 @@ object NotificationMessage {
   implicit val formatNotificationPayload: DynamoFormat[NotificationPayload] = deriveDynamoFormat
   implicit val formatNotificationMessage: DynamoFormat[NotificationMessage] = deriveDynamoFormat
   def create(
-    messageId: MessageId,
+    resourceId: UUID,
+    organizationId: String,
     eventId: Long,
     message: Message
   ): Either[ComponentError, Option[NotificationMessage]] =
@@ -61,13 +62,13 @@ object NotificationMessage {
       .map(
         _.map(p =>
           NotificationMessage(
-            organizationId = messageId.organizationId,
+            organizationId = organizationId,
             eventId = eventId,
             messageUUID = message.messageUUID,
             eventJournalPersistenceId = message.eventJournalPersistenceId,
             eventJournalSequenceNumber = message.eventJournalSequenceNumber,
             eventTimestamp = message.eventTimestamp,
-            resourceId = messageId.resourceId.toString,
+            resourceId = resourceId.toString,
             payload = p
           )
         )

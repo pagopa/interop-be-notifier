@@ -89,7 +89,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/all/events':
+  '/events/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
@@ -98,7 +98,7 @@ paths:
         - events
       summary: Get list of events from all organizations partition
       description: Retrieves the list of events from all organizations partition
-      operationId: getAllEventsFromId
+      operationId: getAllEservicesFromId
       parameters:
         - name: lastEventId
           in: query
@@ -183,6 +183,52 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/events/agreements':
+    parameters:
+    - $ref: '#/components/parameters/CorrelationIdHeader'
+    get:
+      tags:
+        - events
+      summary: Get list of agreements events for all organizations
+      description: Get list of agreements events for all organizations
+      operationId: getAllAgreementsEventsFromId
+      parameters:
+        - name: lastEventId
+          in: query
+          description: returns events starting from this last received id
+          required: true
+          schema:
+            type: integer
+            format: int64
+            default: 0
+        - name: limit
+          in: query
+          description: the number of events returned by this response
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: Events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Events'    
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'    
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'              
 components:
   parameters:
     CorrelationIdHeader:

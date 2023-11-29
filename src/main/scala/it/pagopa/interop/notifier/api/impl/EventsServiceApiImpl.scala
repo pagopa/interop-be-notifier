@@ -10,14 +10,15 @@ import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.errors.ServiceCode
 import it.pagopa.interop.notifier.api.EventsApiService
 import it.pagopa.interop.notifier.api.impl.ResponseHandlers.{
-  getAllEventsFromIdResponse,
+  getAllEservicesFromIdResponse,
   getEventsFromIdResponse,
-  getKeyEventsResponse
+  getKeyEventsResponse,
+  getAllAgreementsEventsFromIdResponse
 }
 import it.pagopa.interop.notifier.database.{AuthorizationEventsDao, KeyEventRecord}
 import it.pagopa.interop.notifier.model._
 import it.pagopa.interop.notifier.model.Adapters._
-import it.pagopa.interop.notifier.service.converters.allOrganizations
+import it.pagopa.interop.notifier.service.converters.{allOrganizations, agreementsPartition}
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,6 +30,21 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass())
+
+  override def getAllAgreementsEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize(M2M_ROLE) {
+    val operationLabel = s"Retrieving $limit messages from id $lastEventId for partition $agreementsPartition"
+    logger.info(operationLabel)
+
+    val result: Future[Events] = getEvents(agreementsPartition, limit, lastEventId)
+
+    onComplete(result) {
+      getAllAgreementsEventsFromIdResponse[Events](operationLabel)(getAllAgreementsEventsFromId200)
+    }
+  }
 
   override def getEventsFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)],
@@ -48,7 +64,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     }
   }
 
-  override def getAllEventsFromId(lastEventId: Long, limit: Int)(implicit
+  override def getAllEservicesFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -59,7 +75,7 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     val result: Future[Events] = getEvents(allOrganizations, limit, lastEventId)
 
     onComplete(result) {
-      getAllEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)
+      getAllEservicesFromIdResponse[Events](operationLabel)(getAllEservicesFromId200)
     }
   }
 

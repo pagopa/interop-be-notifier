@@ -19,7 +19,7 @@ object ResponseHandlers extends AkkaResponses {
       case Failure(ex) => internalServerError(ex, logMessage)
     }
 
-  def getAllEventsFromIdResponse[T](logMessage: String)(
+  def getAllEservicesFromIdResponse[T](logMessage: String)(
     success: T => Route
   )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
     result match {
@@ -28,6 +28,14 @@ object ResponseHandlers extends AkkaResponses {
     }
 
   def getKeyEventsResponse[T](logMessage: String)(
+    success: T => Route
+  )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
+    result match {
+      case Success(s)  => success(s)
+      case Failure(ex) => internalServerError(ex, logMessage)
+    }
+
+  def getAllAgreementsEventsFromIdResponse[T](logMessage: String)(
     success: T => Route
   )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
     result match {

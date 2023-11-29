@@ -1,6 +1,5 @@
 package it.pagopa.interop.notifier.model
 
-import cats.syntax.all._
 import it.pagopa.interop.agreementmanagement.model.agreement.{Active, PersistentAgreement, PersistentStamps}
 import it.pagopa.interop.agreementmanagement.model.persistence.AgreementActivated
 import it.pagopa.interop.commons.queue.message.Message
@@ -51,7 +50,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
       // when
       val conversion: Either[ComponentError, Option[NotificationMessage]] =
-        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+        NotificationMessage.create(resourceId = id, organizationId = organizationId, eventId, message)
       // then
       val expected                                                        = NotificationMessage(
         organizationId,
@@ -63,7 +62,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         payload = PurposePayload(id.toString, ACTIVATED.toString),
         resourceId = id.toString
       )
-      conversion shouldBe Right(expected.some)
+      conversion shouldBe Right(Option(expected))
     }
 
     "Convert agreement created message to dynamo message" in {
@@ -108,7 +107,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
 
       // when
       val conversion: Either[ComponentError, Option[NotificationMessage]] =
-        NotificationMessage.create(MessageId(resourceId = id, organizationId = organizationId), eventId, message)
+        NotificationMessage.create(resourceId = id, organizationId = organizationId, eventId, message)
       // then
       val expected                                                        = NotificationMessage(
         organizationId,
@@ -120,7 +119,7 @@ class DynamoMessageSpec extends AnyWordSpecLike with Matchers {
         payload = AgreementPayload(id.toString, UPDATED.toString),
         resourceId = id.toString
       )
-      conversion shouldBe Right(expected.some)
+      conversion shouldBe Right(Option(expected))
     }
 
   }

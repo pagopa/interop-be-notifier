@@ -27,7 +27,7 @@ package object converters {
 
   object EventType extends Enumeration {
     type EventType = Value
-    val ADDED, CREATED, CLONED, DELETED, UPDATED, SUSPENDED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL = Value
+    val ADDED, CREATED, CLONED, DELETED, UPDATED, SUSPENDED, ACTIVATED, ARCHIVED, WAITING_FOR_APPROVAL, REJECTED = Value
   }
 
   def getMessageIdFromDynamo(

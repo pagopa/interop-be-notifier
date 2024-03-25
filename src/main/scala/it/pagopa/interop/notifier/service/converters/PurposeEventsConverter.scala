@@ -48,6 +48,8 @@ object PurposeEventsConverter {
       case PurposeVersionUpdated(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(_.some)
       case PurposeVersionDeleted(purposeId, _)      => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(_.some)
       case PurposeDeleted(purposeId)                => getMessageIdFromDynamo(dynamoIndexService)(purposeId).map(_.some)
+      case PurposeVersionRejected(purpose, _)       =>
+        getMessageIdFromDynamo(dynamoIndexService)(purpose.id.toString).map(_.some)
     }
 
   def asNotificationPayload: PartialFunction[ProjectableEvent, Either[ComponentError, Option[NotificationPayload]]] = {
@@ -68,6 +70,7 @@ object PurposeEventsConverter {
       case PurposeVersionWaitedForApproval(purpose) =>
         PurposePayload(purpose.id.toString(), WAITING_FOR_APPROVAL.toString).some
       case PurposeVersionArchived(purpose)          => PurposePayload(purpose.id.toString(), ARCHIVED.toString()).some
+      case PurposeVersionRejected(purpose, _)       => PurposePayload(purpose.id.toString(), REJECTED.toString()).some
       // Only on Drafts, should not be notified
       case _: PurposeVersionUpdated                 => None
       // Only on Drafts, should not be notified

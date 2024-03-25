@@ -52,6 +52,7 @@ object AgreementEventsConverter {
     //  Draft creation should not be notified
     case AgreementAdded(a) if a.state != Draft   =>
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.ADDED.toString()).some
+    case AgreementAdded(a)                       => None
     case AgreementUpdated(a)                     =>
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some
     // Only agreements that have never been active can be deleted

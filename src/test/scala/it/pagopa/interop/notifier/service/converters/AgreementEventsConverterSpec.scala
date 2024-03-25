@@ -1,6 +1,6 @@
 package it.pagopa.interop.notifier.service.converters
 
-import it.pagopa.interop.agreementmanagement.model.agreement.{Active, PersistentAgreement, PersistentStamps}
+import it.pagopa.interop.agreementmanagement.model.agreement.{Active, Draft, PersistentAgreement, PersistentStamps}
 import it.pagopa.interop.agreementmanagement.model.persistence._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{AgreementPayload, NotificationObjectType, NotificationPayload}
@@ -16,10 +16,10 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
 
   "Agreement conversions" should {
 
-    "Convert agreement created to event payload" in {
+    "Convert draft agreement created to event payload" in {
       // given
       val id = UUID.randomUUID()
-      val a  = getAgreement(id)
+      val a  = getAgreement(id).copy(state = Draft)
       val e  = AgreementAdded(a)
 
       // when
@@ -27,6 +27,19 @@ class AgreementEventsConverterSpec extends AnyWordSpecLike with Matchers with Sc
         AgreementEventsConverter.asNotificationPayload(e)
       // then
       conversion shouldBe Right(None)
+    }
+
+    "Convert agreement upgraded to event payload" in {
+      // given
+      val id = UUID.randomUUID()
+      val a  = getAgreement(id).copy(state = Active)
+      val e  = AgreementAdded(a)
+
+      // when
+      val conversion: Either[ComponentError, Option[NotificationPayload]] =
+        AgreementEventsConverter.asNotificationPayload(e)
+      // then
+      conversion shouldBe Right(AgreementPayload(id.toString, EventType.ADDED.toString).some)
     }
 
     "Convert agreement deleted to event payload" in {

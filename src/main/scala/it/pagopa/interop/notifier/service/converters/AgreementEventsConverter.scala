@@ -5,6 +5,7 @@ import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{AgreementPayload, MessageId, NotificationObjectType, NotificationPayload}
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import cats.syntax.all._
+import it.pagopa.interop.agreementmanagement.model.agreement.Draft
 import it.pagopa.interop.notifier.service.converters.agreementsPartition
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,7 +48,10 @@ object AgreementEventsConverter {
   }
 
   private[this] def getEventNotificationPayload(event: Event): Option[NotificationPayload] = event match {
-    // Agreements are created with status Draft, and should not be notified
+    // This event is emitted both on Draft creation and upgrade.
+    //  Draft creation should not be notified
+    case AgreementAdded(a) if a.state != Draft   =>
+      AgreementPayload(agreementId = a.id.toString(), eventType = EventType.ADDED.toString()).some
     case _: AgreementAdded                       => None
     case AgreementUpdated(a)                     =>
       AgreementPayload(agreementId = a.id.toString(), eventType = EventType.UPDATED.toString()).some

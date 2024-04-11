@@ -93,8 +93,8 @@ object Dependencies {
 
   private[this] object pagopa {
     lazy val namespace               = "it.pagopa"
-    lazy val catalogManagementClient =
-      namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
+    lazy val catalogProcessClient =
+      namespace %% "interop-be-catalog-process-client" % catalogProcessVersion
 
     lazy val catalogManagementModels =
       namespace %% "interop-be-catalog-management-models" % catalogManagementVersion
@@ -155,7 +155,7 @@ object Dependencies {
       logback.classic                      % Compile,
       mustache.mustache                    % Compile,
       pagopa.agreementManagementModels     % Compile,
-      pagopa.catalogManagementClient       % Compile,
+      pagopa.catalogProcessClient          % Compile,
       pagopa.catalogManagementModels       % Compile,
       pagopa.purposeManagementModels       % Compile,
       pagopa.authorizationManagementModels % Compile,

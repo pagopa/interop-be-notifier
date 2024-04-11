@@ -3,7 +3,7 @@ package it.pagopa.interop.notifier.service.converters
 import it.pagopa.interop.commons.queue.message.ProjectableEvent
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.model.{MessageId, NotificationPayload, PurposePayload}
-import it.pagopa.interop.notifier.service.CatalogManagementService
+import it.pagopa.interop.notifier.service.CatalogProcessService
 import it.pagopa.interop.notifier.service.converters.EventType._
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationResourcesService
 import it.pagopa.interop.purposemanagement.model.persistence._
@@ -13,24 +13,24 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object PurposeEventsConverter {
   def getMessageId(
-    catalogManagementService: CatalogManagementService,
+    catalogProcessService: CatalogProcessService,
     dynamoIndexService: DynamoNotificationResourcesService
   )(implicit
     ec: ExecutionContext,
     contexts: Seq[(String, String)]
   ): PartialFunction[ProjectableEvent, Future[Option[MessageId]]] = { case e: Event =>
-    getMessageIdFromEvent(catalogManagementService, dynamoIndexService, e)
+    getMessageIdFromEvent(catalogProcessService, dynamoIndexService, e)
   }
 
   private[this] def getMessageIdFromEvent(
-    catalogManagementService: CatalogManagementService,
+    catalogProcessService: CatalogProcessService,
     dynamoIndexService: DynamoNotificationResourcesService,
     event: Event
   )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[Option[MessageId]] =
     event match {
       case PurposeCreated(purpose) =>
         for {
-          messageId <- catalogManagementService
+          messageId <- catalogProcessService
             .getEServiceProducerByEServiceId(purpose.eserviceId)
             .map(organizationId => MessageId(purpose.id, organizationId.toString()))
           _         <- dynamoIndexService.put(messageId)

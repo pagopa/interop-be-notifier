@@ -16,7 +16,7 @@ import it.pagopa.interop.notifier.service.converters.{
 }
 import it.pagopa.interop.notifier.service.converters.separator
 import it.pagopa.interop.notifier.model.persistence.PersistentOrganizationEvent
-import it.pagopa.interop.notifier.service.{AuthorizationEventsHandler, CatalogManagementService}
+import it.pagopa.interop.notifier.service.{AuthorizationEventsHandler, CatalogProcessService}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,7 +26,7 @@ final class QueueHandler(
   idRetriever: EventIdRetriever,
   dynamoNotificationService: DynamoNotificationService,
   dynamoIndexService: DynamoNotificationResourcesService,
-  catalogManagementService: CatalogManagementService,
+  catalogProcessService: CatalogProcessService,
   authorizationEventsHandler: AuthorizationEventsHandler
 )(implicit ec: ExecutionContext) {
 
@@ -55,7 +55,7 @@ final class QueueHandler(
     Function.unlift({ msg: Message =>
       implicit val ctx: Seq[(String, String)]                                        = contexts
       val getMessageId: PartialFunction[ProjectableEvent, Future[Option[MessageId]]] =
-        PurposeEventsConverter.getMessageId(catalogManagementService, dynamoIndexService) orElse
+        PurposeEventsConverter.getMessageId(catalogProcessService, dynamoIndexService) orElse
           AgreementEventsConverter.getMessageId(dynamoIndexService) orElse
           CatalogEventsConverter.getMessageId(dynamoIndexService)
 

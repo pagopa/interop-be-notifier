@@ -6,15 +6,15 @@ import scala.concurrent.ExecutionContextExecutor
 
 package object service {
 
-  type CatalogManagementInvoker = catalogmanagement.client.invoker.ApiInvoker
-  type CatalogManagementApi     = catalogmanagement.client.api.EServiceApi
+  type CatalogProcessInvoker = catalogprocess.client.invoker.ApiInvoker
+  type CatalogProcessApi     = catalogprocess.client.api.ProcessApi
 
-  object CatalogManagementInvoker {
-    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): CatalogManagementInvoker =
-      catalogmanagement.client.invoker.ApiInvoker(catalogmanagement.client.api.EnumsSerializers.all, blockingEc)
+  object CatalogProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): CatalogProcessInvoker =
+      catalogprocess.client.invoker.ApiInvoker(catalogprocess.client.api.EnumsSerializers.all, blockingEc)
   }
 
-  object CatalogManagementApi {
-    def apply(baseUrl: String): CatalogManagementApi = catalogmanagement.client.api.EServiceApi(baseUrl)
+  object CatalogProcessApi {
+    def apply(baseUrl: String): CatalogProcessApi = catalogprocess.client.api.ProcessApi(baseUrl)
   }
 }

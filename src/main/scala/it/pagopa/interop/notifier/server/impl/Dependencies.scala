@@ -117,12 +117,12 @@ trait Dependencies {
     loggingEnabled = false
   )
 
-  def catalogManagementService(
+  def catalogProcessService(
     blockingEc: ExecutionContextExecutor
-  )(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): CatalogManagementService =
-    new CatalogManagementServiceImpl(
-      CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
+  )(implicit ec: ExecutionContext, actorSystem: ActorSystem[_]): CatalogProcessService =
+    new CatalogProcessServiceImpl(
+      CatalogProcessInvoker(blockingEc)(actorSystem.classicSystem),
+      CatalogProcessApi(ApplicationConfiguration.catalogProcessURL)
     )
 
   def authorizationEventsHandler(blockingEc: ExecutionContextExecutor): AuthorizationEventsHandler =

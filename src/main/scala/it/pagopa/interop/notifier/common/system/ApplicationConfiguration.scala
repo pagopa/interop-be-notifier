@@ -6,7 +6,7 @@ import it.pagopa.interop.commons.cqrs.model.MongoDbConfig
 object ApplicationConfiguration {
   val config: Config                               = ConfigFactory.load()
   val serverPort: Int                              = config.getInt("notifier.port")
-  val catalogManagementURL: String                 = config.getString("notifier.services.catalog-management")
+  val catalogProcessURL: String                    = config.getString("notifier.services.catalog-process")
   val dynamoNotificationTableName: String          = config.getString("notifier.dynamo.notification-table-name")
   val dynamoNotificationResourcesTableName: String =
     config.getString("notifier.dynamo.notification-resources-table-name")

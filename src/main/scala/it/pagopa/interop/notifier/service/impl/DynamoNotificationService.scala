@@ -30,11 +30,11 @@ class DynamoNotificationService(scanamo: ScanamoAsync) {
   ): Future[List[NotificationMessage]] = {
     logger.debug(s"Getting $limit events for organization $organizationId from $eventId")
     val operations: ScanamoOps[List[Either[DynamoReadError, NotificationMessage]]] =
-      messages.query("organizationId" === organizationId and "eventId" > eventId)
+      messages.limit(limit).query("organizationId" === organizationId and "eventId" > eventId)
     scanamo.exec(operations).map(_.sequence).flatMap {
       case Right(x)  =>
         logger.debug(s"${x.size} messages retrieved from Dynamo")
-        Future.successful(x.take(limit)) // TODO consider improving this using the limit upstream
+        Future.successful(x)
       case Left(err) => Future.failed(DynamoReadingError(describe(err)))
     }
   }

@@ -10,15 +10,21 @@ import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.errors.ServiceCode
 import it.pagopa.interop.notifier.api.EventsApiService
 import it.pagopa.interop.notifier.api.impl.ResponseHandlers.{
+  getAllAgreementsEventsFromIdResponse,
   getAllEservicesFromIdResponse,
   getEventsFromIdResponse,
   getKeyEventsResponse,
-  getAllAgreementsEventsFromIdResponse
+  getProducerKeyEventsResponse
 }
-import it.pagopa.interop.notifier.database.{AuthorizationEventsDao, KeyEventRecord}
-import it.pagopa.interop.notifier.model._
+import it.pagopa.interop.notifier.database.{
+  AuthorizationEventsDao,
+  KeyEventRecord,
+  ProducerKeyEventRecord,
+  ProducerKeyEventsDao
+}
 import it.pagopa.interop.notifier.model.Adapters._
-import it.pagopa.interop.notifier.service.converters.{allOrganizations, agreementsPartition}
+import it.pagopa.interop.notifier.model._
+import it.pagopa.interop.notifier.service.converters.{agreementsPartition, allOrganizations}
 import it.pagopa.interop.notifier.service.impl.DynamoNotificationService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -99,10 +105,10 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val operationLabel         = s"Retrieving $limit keys messages from id $lastEventId"
+    val operationLabel         = s"Retrieving $limit producer keys messages from id $lastEventId"
     val result: Future[Events] = AuthorizationEventsDao
       .select(lastEventId, limit)
-      .map(convertToEvents)
+      .map(convertKeyRecordToEvents)
 
     onComplete(result) {
       getKeyEventsResponse[Events](operationLabel)(getKeysEvents200)
@@ -110,7 +116,35 @@ final class EventsServiceApiImpl(dynamoNotificationService: DynamoNotificationSe
 
   }
 
-  private def convertToEvents(records: Seq[KeyEventRecord]): Events = {
+  private def convertKeyRecordToEvents(records: Seq[KeyEventRecord]): Events = {
+    val events: Seq[Event] = records.map(record =>
+      Event(
+        eventId = record.eventId,
+        eventType = record.eventType.toString,
+        objectType = ObjectType.KEY,
+        objectId = Map("kid" -> record.kid)
+      )
+    )
+
+    Events(lastEventId = records.lastOption.map(_.eventId), events = events)
+  }
+
+  override def getProducerKeysEvents(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val operationLabel         = s"Retrieving $limit keys messages from id $lastEventId"
+    val result: Future[Events] = ProducerKeyEventsDao
+      .select(lastEventId, limit)
+      .map(convertProducerKeyRecordToEvents)
+
+    onComplete(result) {
+      getProducerKeyEventsResponse[Events](operationLabel)(getProducerKeysEvents200)
+    }
+  }
+
+  private def convertProducerKeyRecordToEvents(records: Seq[ProducerKeyEventRecord]): Events = {
     val events: Seq[Event] = records.map(record =>
       Event(
         eventId = record.eventId,

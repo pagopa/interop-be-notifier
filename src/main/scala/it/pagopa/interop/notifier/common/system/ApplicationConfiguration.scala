@@ -45,13 +45,13 @@ object ApplicationConfiguration {
   val postgresKeysNotificationTable: String = {
     val schema = config.getString("notifier.postgres.notification-schema-name")
     val table  = config.getString("notifier.postgres.tables.key-notification-table-name")
-    s"$schema.$table"
+    s""""$schema".$table"""
   }
 
   val postgresProducerKeysNotificationTable: String = {
     val schema = config.getString("notifier.postgres.notification-schema-name")
     val table  = config.getString("notifier.postgres.tables.producer-key-notification-table-name")
-    s"$schema.$table"
+    s""""$schema".$table"""
   }
 
 }
